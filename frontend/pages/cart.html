@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Cart — Abstract Cosmetics</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/header.css">
+  <link rel="stylesheet" href="../css/dropdowns.css">
+  <link rel="stylesheet" href="../css/buttons.css">
+  <link rel="stylesheet" href="../css/home.css">
+  <link rel="stylesheet" href="../css/product-detail.css">
+  <link rel="stylesheet" href="../css/cart-page.css">
+  <link rel="stylesheet" href="../css/modal.css">
+  <link rel="stylesheet" href="../css/toast.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+
+  <header class="header">
+    <div class="container">
+      <a class="header-logo-container" href="index.html" aria-label="Abstract Cosmetics — go to home">
+        <img class="header-logo" src="/frontend/assets/abstract_logo.png" alt="">
+        <span class="header-greeting">Hello, Customer</span>
+      </a>
+
+      <div class="header-actions">
+        <div class="header-action">
+          <button class="icon-btn" id="notifications-trigger" data-tooltip="View notifications" aria-label="View notifications">
+            <i data-lucide="bell"></i>
+            <span class="icon-btn-badge" id="notifications-badge" data-count="0"></span>
+          </button>
+          <div class="dropdown-panel" id="notifications-panel">
+            <div class="dropdown-panel-header">
+              <p class="dropdown-panel-title">Notifications</p>
+              <button class="dropdown-panel-cancel" type="button" data-close-panel>Cancel</button>
+            </div>
+            <ul class="notification-list"></ul>
+            <a href="notifications.html" class="dropdown-panel-view-all">View all</a>
+          </div>
+        </div>
+
+        <div class="header-action">
+          <button class="icon-btn" id="cart-trigger" data-tooltip="View cart" aria-label="View cart">
+            <i data-lucide="shopping-cart"></i>
+            <span class="icon-btn-badge" id="cart-badge" data-count="0"></span>
+          </button>
+          <div class="dropdown-panel" id="cart-panel">
+            <div class="dropdown-panel-header">
+              <p class="dropdown-panel-title">Your cart</p>
+              <button class="dropdown-panel-cancel" type="button" data-close-panel>Cancel</button>
+            </div>
+            <ul class="cart-preview-list"></ul>
+            <div class="cart-preview-footer is-hidden">
+              <span class="cart-preview-total"></span>
+              <a href="cart.html" class="btn btn--primary btn--sm">View cart</a>
+            </div>
+          </div>
+        </div>
+
+        <a class="icon-btn" href="login.html" data-tooltip="Create / sign up" aria-label="Log in or sign up">
+          <i data-lucide="log-in"></i>
+        </a>
+
+        <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle color theme">
+          <i data-lucide="sun-moon" class="theme-icon theme-icon-auto"></i>
+          <i data-lucide="sun" class="theme-icon theme-icon-light"></i>
+          <i data-lucide="moon" class="theme-icon theme-icon-dark"></i>
+          <span class="theme-toggle-label">Auto</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="page-section container">
+      <a href="index.html" class="back-link">
+        <i data-lucide="arrow-left"></i> Go back to home
+      </a>
+      <h1>Your cart</h1>
+
+      <div class="cart-layout">
+        <div>
+          <div id="cart-lines"></div>
+          <div class="empty-state is-hidden" id="cart-empty-state">
+            <i data-lucide="shopping-cart"></i>
+            <h3>Your cart is empty</h3>
+            <p>Browse our products and add something you'll love.</p>
+            <a href="products.html" class="btn btn--primary">Shop products</a>
+          </div>
+        </div>
+
+        <aside class="order-summary" id="order-summary">
+          <h3>Order summary</h3>
+          <div class="order-summary-row">
+            <span>Subtotal</span>
+            <span id="summary-subtotal">KSh 0</span>
+          </div>
+          <div class="order-summary-row">
+            <span>Delivery</span>
+            <span id="summary-delivery">KSh 0</span>
+          </div>
+          <div class="order-summary-row order-summary-total">
+            <span>Total</span>
+            <span id="summary-total">KSh 0</span>
+          </div>
+          <button class="btn btn--primary btn--full order-summary-checkout-btn" id="checkout-btn">
+            <i data-lucide="lock"></i> Checkout with M-Pesa
+          </button>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-top">
+      <div class="footer-brand">
+        <h3>Abstract Cosmetics</h3>
+        <p>Hair, skin and body care essentials, delivered across Kenya.</p>
+      </div>
+      <div class="footer-contact">
+        <h4>Contact</h4>
+        <a class="footer-contact-item" href="tel:+254700264557" data-tooltip="Tap to call">
+          <i data-lucide="phone"></i> 0700 264 557
+        </a>
+        <a class="footer-contact-item" href="mailto:hello@abstractcosmetics.co.ke" data-tooltip="Send us an email">
+          <i data-lucide="mail"></i> hello@abstractcosmetics.co.ke
+        </a>
+        <span class="footer-contact-item">
+          <i data-lucide="map-pin"></i> Nairobi, Kenya
+        </span>
+      </div>
+      <nav class="footer-nav">
+        <h4>Shop</h4>
+        <a href="products.html">All products</a>
+        <a href="cart.html">Your cart</a>
+        <a href="login.html">Account</a>
+      </nav>
+    </div>
+
+    <div class="container footer-directions">
+      <h4>No idea where to find us? We've got you.</h4>
+      <p>Watch this quick clip for directions straight to our shop.</p>
+      <div class="footer-directions-video">
+        <!-- Replace VIDEO_ID and the handle below with your real TikTok directions video -->
+        <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@abstractcosmetics/video/VIDEO_ID" data-video-id="VIDEO_ID">
+          <section>
+            <a target="_blank" rel="noopener" href="https://www.tiktok.com/@abstractcosmetics">@abstractcosmetics on TikTok</a> — directions to our shop
+          </section>
+        </blockquote>
+      </div>
+    </div>
+
+    <div class="footer-bottom">&copy; 2026 Abstract Cosmetics. All rights reserved.</div>
+  </footer>
+
+  <!-- Checkout modal: mocks the M-Pesa STK push flow -->
+  <div class="modal-overlay" id="checkout-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Checkout</h3>
+        <button class="modal-close" id="checkout-modal-close" aria-label="Close">Cancel</button>
+      </div>
+
+      <div id="checkout-form-step">
+        <form id="checkout-form">
+          <div class="field">
+            <label for="mpesa-phone">M-Pesa phone number</label>
+            <input type="tel" id="mpesa-phone" placeholder="07XX XXX XXX" required>
+          </div>
+          <div class="field">
+            <label for="shipping-address">Shipping address</label>
+            <input type="text" id="shipping-address" placeholder="Street, estate, town" required>
+          </div>
+          <button type="submit" class="btn btn--primary btn--full">Send STK push</button>
+        </form>
+      </div>
+
+      <div id="checkout-success-step" class="is-hidden">
+        <div class="modal-success">
+          <i data-lucide="check-circle"></i>
+          <h3>Payment request sent</h3>
+          <p>Check your phone and enter your M-Pesa PIN to complete the payment.</p>
+          <a href="index.html" class="btn btn--primary btn--full">Go back to home</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="../js/theme.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/cart.js"></script>
+  <script src="../js/notifications.js"></script>
+  <script src="../js/main.js"></script>
+  <script src="../js/forms.js"></script>
+  <script src="../js/cart-page.js"></script>
+  <script async src="https://www.tiktok.com/embed.js"></script>
+</body>
+</html>

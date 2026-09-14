@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log In — Abstract Cosmetics</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/header.css">
+  <link rel="stylesheet" href="../css/buttons.css">
+  <link rel="stylesheet" href="../css/auth.css">
+  <link rel="stylesheet" href="../css/toast.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+
+  <header class="header">
+    <div class="container">
+      <a class="header-logo-container" href="index.html" aria-label="Abstract Cosmetics — go to home">
+        <img class="header-logo" src="/frontend/assets/abstract_logo.png" alt="">
+        <span class="header-greeting">Abstract Cosmetics</span>
+      </a>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle color theme">
+          <i data-lucide="sun-moon" class="theme-icon theme-icon-auto"></i>
+          <i data-lucide="sun" class="theme-icon theme-icon-light"></i>
+          <i data-lucide="moon" class="theme-icon theme-icon-dark"></i>
+          <span class="theme-toggle-label">Auto</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="auth-page">
+    <div class="auth-card">
+      <div class="auth-card-brand">
+        <img src="/frontend/assets/abstract_logo.png" alt="">
+        <h2>Welcome back</h2>
+      </div>
+
+      <div class="auth-tabs">
+        <button class="is-active" data-auth-tab="login">Log in</button>
+        <button data-auth-tab="register">Create account</button>
+      </div>
+
+      <form id="login-form" class="auth-form is-active" data-auth-form="login">
+        <div class="field">
+          <label for="login-email">Email</label>
+          <input type="email" id="login-email" required>
+        </div>
+        <div class="field">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" required>
+        </div>
+        <button type="submit" class="btn btn--primary btn--full">Log in</button>
+      </form>
+
+      <form id="register-form" class="auth-form" data-auth-form="register">
+        <div class="field">
+          <label for="register-name">Full name</label>
+          <input type="text" id="register-name" required>
+        </div>
+        <div class="field">
+          <label for="register-phone">Phone number</label>
+          <input type="tel" id="register-phone" placeholder="07XX XXX XXX" required>
+        </div>
+        <div class="field">
+          <label for="register-email">Email</label>
+          <input type="email" id="register-email" required>
+        </div>
+        <div class="field">
+          <label for="register-password">Password</label>
+          <input type="password" id="register-password" required>
+        </div>
+        <button type="submit" class="btn btn--primary btn--full">Create account</button>
+      </form>
+
+      <p class="auth-card-footer-link">Are you a shop admin? <a href="admin-login.html">Staff log in</a></p>
+    </div>
+  </main>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="../js/theme.js"></script>
+  <script src="../js/main.js"></script>
+  <script src="../js/forms.js"></script>
+  <script src="../js/auth.js"></script>
+</body>
+</html>

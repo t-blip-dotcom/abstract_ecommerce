@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Categories — Abstract Cosmetics Admin</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/header.css">
+  <link rel="stylesheet" href="../css/buttons.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="../css/modal.css">
+  <link rel="stylesheet" href="../css/toast.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-brand">
+        <i data-lucide="sparkles"></i> Abstract Admin
+      </div>
+      <p class="admin-sidebar-role" id="admin-role-label"></p>
+      <nav class="admin-nav" id="admin-nav"></nav>
+      <button class="admin-sidebar-logout" id="admin-logout" type="button">
+        <i data-lucide="log-out"></i> Log out
+      </button>
+    </aside>
+
+    <main class="admin-main">
+      <div class="admin-topbar">
+        <div>
+          <h1>Categories</h1>
+          <p>The categories products are organized under on the storefront.</p>
+        </div>
+        <button class="btn btn--primary" id="add-category-btn"><i data-lucide="plus"></i> Add category</button>
+      </div>
+
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr><th>Category</th><th>Description</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="admin-categories-body"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="category-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="category-modal-title">Add category</h3>
+        <button class="modal-close" id="category-modal-close" type="button">Cancel</button>
+      </div>
+      <form id="category-form">
+        <div class="field">
+          <label for="category-name">Category name</label>
+          <input type="text" id="category-name" required>
+        </div>
+        <div class="field">
+          <label for="category-description">Description</label>
+          <input type="text" id="category-description">
+        </div>
+        <button type="submit" class="btn btn--primary btn--full" id="category-form-submit">Save category</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="../js/theme.js"></script>
+  <script src="../js/main.js"></script>
+  <script src="../js/forms.js"></script>
+  <script src="../js/admin-shared.js"></script>
+  <script src="../js/admin-categories.js"></script>
+</body>
+</html>

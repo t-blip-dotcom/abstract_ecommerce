@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff — Abstract Cosmetics Admin</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/header.css">
+  <link rel="stylesheet" href="../css/buttons.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="../css/modal.css">
+  <link rel="stylesheet" href="../css/toast.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-brand">
+        <i data-lucide="sparkles"></i> Abstract Admin
+      </div>
+      <p class="admin-sidebar-role" id="admin-role-label"></p>
+      <nav class="admin-nav" id="admin-nav"></nav>
+      <button class="admin-sidebar-logout" id="admin-logout" type="button">
+        <i data-lucide="log-out"></i> Log out
+      </button>
+    </aside>
+
+    <main class="admin-main">
+      <div class="admin-topbar">
+        <div>
+          <h1>Staff</h1>
+          <p>Manage staff accounts and their roles.</p>
+        </div>
+        <button class="btn btn--primary" id="add-staff-btn"><i data-lucide="plus"></i> Add staff member</button>
+      </div>
+
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Last login</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="admin-staff-body"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="staff-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="staff-modal-title">Add staff member</h3>
+        <button class="modal-close" id="staff-modal-close" type="button">Cancel</button>
+      </div>
+      <form id="staff-form">
+        <div class="field">
+          <label for="staff-name">Full name</label>
+          <input type="text" id="staff-name" required>
+        </div>
+        <div class="field">
+          <label for="staff-email">Email address</label>
+          <input type="email" id="staff-email" required>
+        </div>
+        <div class="field">
+          <label for="staff-role">Role</label>
+          <select id="staff-role" required></select>
+        </div>
+        <div class="field">
+          <label for="staff-status">Status</label>
+          <select id="staff-status" required>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn--primary btn--full" id="staff-form-submit">Save staff member</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="../js/theme.js"></script>
+  <script src="../js/main.js"></script>
+  <script src="../js/forms.js"></script>
+  <script src="../js/admin-shared.js"></script>
+  <script src="../js/admin-staff.js"></script>
+</body>
+</html>

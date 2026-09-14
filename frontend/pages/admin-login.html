@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff Login — Abstract Cosmetics</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/header.css">
+  <link rel="stylesheet" href="../css/buttons.css">
+  <link rel="stylesheet" href="../css/auth.css">
+  <link rel="stylesheet" href="../css/toast.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+
+  <header class="header">
+    <div class="container">
+      <a class="header-logo-container" href="index.html" aria-label="Abstract Cosmetics — go to home">
+        <img class="header-logo" src="https://placehold.co/42x42/D1FAE5/059669?text=A" alt="">
+        <span class="header-greeting">Abstract Cosmetics</span>
+      </a>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle color theme">
+          <i data-lucide="sun-moon" class="theme-icon theme-icon-auto"></i>
+          <i data-lucide="sun" class="theme-icon theme-icon-light"></i>
+          <i data-lucide="moon" class="theme-icon theme-icon-dark"></i>
+          <span class="theme-toggle-label">Auto</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="auth-page">
+    <div class="auth-card">
+      <div class="auth-card-brand">
+        <img src="https://placehold.co/48x48/059669/FFFFFF?text=%E2%9C%93" alt="">
+        <h2>Staff sign in</h2>
+        <p class="auth-card-subtitle">For shop admins, managers, and staff only.</p>
+      </div>
+
+      <form id="admin-login-form">
+        <div class="field">
+          <label for="admin-email">Staff email</label>
+          <input type="email" id="admin-email" placeholder="e.g. jane@abstractcosmetics.co.ke" required>
+        </div>
+        <div class="field">
+          <label for="admin-password">Password</label>
+          <input type="password" id="admin-password" required>
+        </div>
+        <p class="auth-card-hint">
+          Demo only: include "admin" or "manager" in the email to preview that role — anything else signs in as Staff. Once the backend exists, your role comes from the staff table automatically.
+        </p>
+        <button type="submit" class="btn btn--primary btn--full">Log in</button>
+      </form>
+
+      <p class="auth-card-footer-link">Not staff? <a href="login.html">Customer log in</a></p>
+    </div>
+  </main>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="../js/theme.js"></script>
+  <script src="../js/main.js"></script>
+  <script src="../js/forms.js"></script>
+  <script>
+    // Mock only: once the backend exists, POST /api/auth/staff-login
+    // returns { name, role } from the staff/role tables, and this
+    // heuristic goes away entirely.
+    document.getElementById('admin-login-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const form = e.target;
+      if (!window.validateForm(form)) return;
+
+      const email = document.getElementById('admin-email').value.toLowerCase();
+      let role = 'staff';
+      if (email.includes('admin')) role = 'admin';
+      else if (email.includes('manager')) role = 'online_manager';
+
+      const name = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+      localStorage.setItem('cosmeticshop_staff_role', role);
+      localStorage.setItem('cosmeticshop_staff_name', name || 'Staff member');
+
+      window.showToast('Logged in successfully.', 'success');
+      window.location.href = 'admin-products.html';
+    });
+  </script>
+</body>
+</html>

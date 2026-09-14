@@ -1,0 +1,148 @@
+/* =========================================================
+   QUANTITY SHEET
+   Tapping "Add to cart" on a product card opens this: the
+   product image + name, a quantity stepper, and a confirm
+   button. On narrow screens it slides up from the bottom like
+   a native mobile sheet; on wider screens it's a centered modal.
+   ========================================================= */
+
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 22, 0.5);
+  z-index: 600;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--transition-base), visibility var(--transition-base);
+}
+
+.sheet-overlay.is-open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.sheet-panel {
+  background: var(--color-surface);
+  width: 100%;
+  max-height: 88vh;
+  overflow-y: auto;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: var(--space-3) var(--space-5) var(--space-6);
+  box-shadow: var(--shadow-popover);
+  transform: translateY(100%);
+  transition: transform var(--transition-base);
+}
+
+.sheet-overlay.is-open .sheet-panel {
+  transform: translateY(0);
+}
+
+.sheet-handle {
+  width: 40px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--color-border);
+  margin: var(--space-2) auto var(--space-4);
+}
+
+.sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: var(--space-3);
+}
+
+.sheet-close {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--color-text-muted);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+}
+
+.sheet-close:hover {
+  color: var(--color-danger);
+  background: var(--color-danger-bg);
+}
+
+.sheet-product {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.sheet-product img {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  background: var(--color-primary-light);
+  flex-shrink: 0;
+}
+
+.sheet-product-name {
+  font-weight: 700;
+  margin: 0 0 var(--space-1);
+}
+
+.sheet-product-price {
+  color: var(--color-primary);
+  font-weight: 700;
+  font-size: var(--fs-md);
+}
+
+.sheet-quantity-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+}
+
+.sheet-quantity-label {
+  font-weight: 600;
+  font-size: var(--fs-sm);
+}
+
+.sheet-stock-note {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  margin: calc(var(--space-2) * -1) 0 var(--space-4);
+}
+
+/* ---- Wider screens: centered modal instead of a bottom sheet ---- */
+@media (min-width: 640px) {
+  .sheet-overlay {
+    align-items: center;
+    padding: var(--space-4);
+  }
+
+  .sheet-panel {
+    max-width: 400px;
+    border-radius: var(--radius-lg);
+    transform: translateY(12px);
+  }
+
+  .sheet-overlay.is-open .sheet-panel {
+    transform: translateY(0);
+  }
+
+  .sheet-handle {
+    display: none;
+  }
+
+  .sheet-header {
+    justify-content: space-between;
+  }
+
+  .sheet-header::before {
+    content: 'Add to cart';
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: var(--fs-md);
+    color: var(--color-text);
+  }
+}

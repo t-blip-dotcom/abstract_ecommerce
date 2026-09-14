@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orders — Abstract Cosmetics Admin</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/header.css">
+  <link rel="stylesheet" href="../css/buttons.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="../css/toast.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-brand">
+        <i data-lucide="sparkles"></i> Abstract Admin
+      </div>
+      <p class="admin-sidebar-role" id="admin-role-label"></p>
+      <nav class="admin-nav" id="admin-nav"></nav>
+      <button class="admin-sidebar-logout" id="admin-logout" type="button">
+        <i data-lucide="log-out"></i> Log out
+      </button>
+    </aside>
+
+    <main class="admin-main">
+      <div class="admin-topbar">
+        <div>
+          <h1>Orders</h1>
+          <p>Track every order and update its status as it moves.</p>
+        </div>
+      </div>
+
+      <div class="view-only-banner is-hidden" id="orders-view-only-banner">
+        <i data-lucide="eye"></i> You can update order status, but other order details are managed by admins and managers.
+      </div>
+
+      <div class="admin-filter-bar">
+        <div class="field">
+          <label for="filter-order-status">Order status</label>
+          <select id="filter-order-status"></select>
+        </div>
+        <div class="field">
+          <label for="filter-payment-status">Payment status</label>
+          <select id="filter-payment-status"></select>
+        </div>
+        <div class="field">
+          <label for="filter-date-from">From</label>
+          <input type="date" id="filter-date-from">
+        </div>
+        <div class="field">
+          <label for="filter-date-to">To</label>
+          <input type="date" id="filter-date-to">
+        </div>
+        <div class="field admin-filter-search-field">
+          <label for="filter-order-search">Search customer</label>
+          <input type="text" id="filter-order-search" placeholder="Search by customer name">
+        </div>
+        <button class="admin-filter-clear" id="filter-order-clear" type="button">Clear filters</button>
+      </div>
+
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Order</th><th>Customer</th><th>Date</th><th>Payment method</th><th>Payment status</th><th>Amount</th><th>Processed by</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="admin-orders-body"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="../js/theme.js"></script>
+  <script src="../js/main.js"></script>
+  <script src="../js/admin-shared.js"></script>
+  <script src="../js/admin-orders.js"></script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Products — Abstract Cosmetics Admin</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/header.css">
+  <link rel="stylesheet" href="../css/buttons.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="../css/modal.css">
+  <link rel="stylesheet" href="../css/toast.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-brand">
+        <i data-lucide="sparkles"></i> Abstract Admin
+      </div>
+      <p class="admin-sidebar-role" id="admin-role-label"></p>
+      <nav class="admin-nav" id="admin-nav"></nav>
+      <button class="admin-sidebar-logout" id="admin-logout" type="button">
+        <i data-lucide="log-out"></i> Log out
+      </button>
+    </aside>
+
+    <main class="admin-main">
+      <div class="admin-topbar">
+        <div>
+          <h1>Products</h1>
+          <p>Add, edit, and manage what's live on the storefront.</p>
+        </div>
+        <button class="btn btn--primary" id="add-product-btn"><i data-lucide="plus"></i> Add product</button>
+      </div>
+
+      <div class="view-only-banner is-hidden" id="products-view-only-banner">
+        <i data-lucide="eye"></i> You have view-only access to products. Contact an admin or manager to make changes.
+      </div>
+
+      <div class="admin-filter-bar">
+        <div class="field">
+          <label for="filter-category">Category</label>
+          <select id="filter-category"></select>
+        </div>
+        <div class="field">
+          <label for="filter-brand">Brand</label>
+          <select id="filter-brand"></select>
+        </div>
+        <div class="field">
+          <label for="filter-status">Status</label>
+          <select id="filter-status"></select>
+        </div>
+        <div class="field admin-filter-search-field">
+          <label for="filter-search">Search</label>
+          <input type="text" id="filter-search" placeholder="Search by product name">
+        </div>
+        <button class="admin-filter-clear" id="filter-clear" type="button">Clear filters</button>
+      </div>
+
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Photo</th><th>Name</th><th>Category</th><th>Brand</th><th>Supplier</th><th>Price</th><th>Stock</th><th>Status</th><th id="products-actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="admin-products-body"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add / edit product modal -->
+  <div class="modal-overlay" id="product-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="product-modal-title">Add product</h3>
+        <button class="modal-close" id="product-modal-close" type="button">Cancel</button>
+      </div>
+      <form id="product-form">
+        <div class="field">
+          <label for="product-photo">Product photo</label>
+          <div class="photo-upload">
+            <img class="photo-upload-preview" id="product-photo-preview" src="" alt="">
+            <div class="photo-upload-input-wrap">
+              <input type="file" id="product-photo" accept="image/*">
+              <p class="photo-upload-hint">PNG or JPG, square images look best.</p>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="product-name">Product name</label>
+          <input type="text" id="product-name" required>
+        </div>
+        <div class="field">
+          <label for="product-category">Category</label>
+          <select id="product-category" required></select>
+        </div>
+        <div class="field">
+          <label for="product-brand">Brand</label>
+          <select id="product-brand" required></select>
+        </div>
+        <div class="field">
+          <label for="product-supplier">Supplier</label>
+          <select id="product-supplier" required></select>
+        </div>
+        <div class="field">
+          <label for="product-price">Price (KSh)</label>
+          <input type="number" id="product-price" min="0" required>
+        </div>
+        <div class="field">
+          <label for="product-stock">Stock quantity</label>
+          <input type="number" id="product-stock" min="0" required>
+        </div>
+        <div class="field">
+          <label for="product-status">Status</label>
+          <select id="product-status" required></select>
+        </div>
+        <button type="submit" class="btn btn--primary btn--full" id="product-form-submit">Save product</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="../js/theme.js"></script>
+  <script src="../js/main.js"></script>
+  <script src="../js/forms.js"></script>
+  <script src="../js/admin-shared.js"></script>
+  <script src="../js/admin-products.js"></script>
+</body>
+</html>
