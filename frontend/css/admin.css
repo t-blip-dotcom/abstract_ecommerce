@@ -9,7 +9,7 @@
 }
 
 .admin-sidebar {
-  background: var(--color-primary);
+  background: linear-gradient(160deg, var(--gradient-start), var(--gradient-end));
   color: #fff;
   padding: var(--space-5);
   display: flex;
@@ -125,8 +125,13 @@
   font-weight: 700;
 }
 
-.stat-card-delta.is-up { color: var(--color-primary); }
-.stat-card-delta.is-down { color: var(--color-danger); }
+.stat-card-delta.is-up {
+  color: var(--color-primary);
+}
+
+.stat-card-delta.is-down {
+  color: var(--color-danger);
+}
 
 .stat-card-value-danger {
   color: var(--color-danger);
@@ -180,15 +185,30 @@
   font-weight: 700;
 }
 
-.status-badge--pending { background: var(--color-warning-bg); color: var(--color-warning); }
+.status-badge--pending {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+
 .status-badge--paid,
 .status-badge--delivered,
-.status-badge--active { background: var(--color-primary-light); color: var(--color-primary); }
+.status-badge--active {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
 .status-badge--cancelled,
 .status-badge--payment_failed,
-.status-badge--out_of_stock { background: var(--color-danger-bg); color: var(--color-danger); }
+.status-badge--out_of_stock {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
 .status-badge--processing,
-.status-badge--shipped { background: var(--color-surface-alt); color: var(--color-text-muted); }
+.status-badge--shipped {
+  background: var(--color-surface-alt);
+  color: var(--color-text-muted);
+}
 
 .data-table select.status-select {
   padding: var(--space-1) var(--space-2);

@@ -1,24 +1,49 @@
+/* =========================================================
+   DESIGN TOKENS
+   Brand palette: blue family (#008AD6, vibrant #0F98DF ->
+   deeper #0074BD) on white, with charcoal grey neutrals.
+   "auto" theme follows the device's light/dark setting by
+   default; the person can override it via data-theme on <html>.
+   ========================================================= */
+
 :root {
+    /* ---- Brand colors ---- */
+    --color-primary: #008AD6;
+    /* base blue — buttons, links, icons */
+    --color-primary-hover: #0074BD;
+    /* deeper blue — hover/active state */
+    --color-primary-light: #E1F1FB;
+    /* subtle backgrounds/highlights */
+    --color-accent: #0F98DF;
+    /* vibrant blue — used in the header gradient */
 
-    --color-primary: #059669;
-    --color-primary-hover: #047857;
-    --color-primary-light: #D1FAE5;
-    --color-accent: #10B981;
+    /* Header / admin sidebar gradient stops (vibrant -> deeper) */
+    --gradient-start: #0F98DF;
+    --gradient-end: #0074BD;
 
+    /* Kept separate from --color-primary so success messages stay
+     green regardless of the brand color. */
+    --color-success: #16A34A;
+    --color-success-bg: #F0FDF4;
+
+    /* ---- Surfaces ---- */
     --color-bg: #FFFFFF;
     --color-surface: #FFFFFF;
-    --color-surface-alt: #F6F8F6;
-    --color-border: #E3E8DF;
+    --color-surface-alt: #F5F6F7;
+    --color-border: #E2E5E8;
 
-    --color-text: #172016;
-    --color-text-muted: #5C6A57;
+    /* ---- Text (charcoal grey, not tinted) ---- */
+    --color-text: #33383D;
+    --color-text-muted: #6B7280;
     --color-text-on-primary: #FFFFFF;
 
+    /* ---- Feedback ---- */
     --color-danger: #DC2626;
     --color-danger-bg: #FEF2F2;
     --color-warning: #B45309;
     --color-warning-bg: #FFFBEB;
 
+    /* ---- Typography ---- */
     --font-display: 'Fraunces', Georgia, serif;
     --font-body: 'Manrope', system-ui, -apple-system, sans-serif;
 
@@ -30,7 +55,7 @@
     --fs-xl: 1.75rem;
     --fs-2xl: 2.25rem;
 
-
+    /* ---- Spacing scale ---- */
     --space-1: 0.25rem;
     --space-2: 0.5rem;
     --space-3: 0.75rem;
@@ -40,38 +65,44 @@
     --space-7: 3rem;
     --space-8: 4rem;
 
-
+    /* ---- Radius / shadow ---- */
     --radius-sm: 6px;
     --radius-md: 10px;
     --radius-lg: 16px;
-    --shadow-card: 0 1px 3px rgba(23, 32, 22, 0.08);
-    --shadow-card-hover: 0 12px 24px rgba(23, 32, 22, 0.12);
-    --shadow-popover: 0 8px 30px rgba(23, 32, 22, 0.16);
+    --shadow-card: 0 1px 3px rgba(51, 56, 61, 0.08);
+    --shadow-card-hover: 0 12px 24px rgba(51, 56, 61, 0.12);
+    --shadow-popover: 0 8px 30px rgba(51, 56, 61, 0.16);
 
-
+    /* ---- Motion ---- */
     --transition-fast: 150ms ease;
     --transition-base: 220ms ease;
 
-
+    /* ---- Layout ---- */
     --header-height: 72px;
     --container-max: 1240px;
 }
 
-
+/* ---- Dark theme: true neutral charcoal, no navy tint ---- */
 [data-theme="dark"] {
     --color-bg: #17181A;
     --color-surface: #202325;
     --color-surface-alt: #26292B;
     --color-border: #3A3E3D;
 
-    --color-text: #E7E9E6;
-    --color-text-muted: #9CA39B;
+    --color-text: #E7E9EA;
+    --color-text-muted: #9CA3AF;
     --color-text-on-primary: #FFFFFF;
 
-    --color-primary: #34D399;
-    --color-primary-hover: #10B981;
-    --color-primary-light: #123527;
-    --color-accent: #6EE7B7;
+    --color-primary: #38BDF8;
+    --color-primary-hover: #0EA5E9;
+    --color-primary-light: #0C3B57;
+    --color-accent: #7DD3FC;
+
+    --gradient-start: #38BDF8;
+    --gradient-end: #0EA5E9;
+
+    --color-success: #22C55E;
+    --color-success-bg: #103820;
 
     --color-danger: #F87171;
     --color-danger-bg: #3B1414;

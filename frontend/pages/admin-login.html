@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Staff Login — Abstract Cosmetics</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
 
   <link rel="stylesheet" href="../css/variables.css">
   <link rel="stylesheet" href="../css/base.css">
@@ -16,13 +19,14 @@
   <link rel="stylesheet" href="../css/toast.css">
   <link rel="stylesheet" href="../css/responsive.css">
 </head>
+
 <body>
 
   <header class="header">
     <div class="container">
       <a class="header-logo-container" href="index.html" aria-label="Abstract Cosmetics — go to home">
-        <img class="header-logo" src="https://placehold.co/42x42/D1FAE5/059669?text=A" alt="">
-        <span class="header-greeting">Abstract Cosmetics</span>
+        <img class="header-logo" src="/frontend/assets/abstract_logo.png" alt="">
+
       </a>
       <div class="header-actions">
         <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle color theme">
@@ -38,7 +42,7 @@
   <main class="auth-page">
     <div class="auth-card">
       <div class="auth-card-brand">
-        <img src="https://placehold.co/48x48/059669/FFFFFF?text=%E2%9C%93" alt="">
+        <img src="/frontend/assets/abstract_logo.png" alt="">
         <h2>Staff sign in</h2>
         <p class="auth-card-subtitle">For shop admins, managers, and staff only.</p>
       </div>
@@ -53,7 +57,8 @@
           <input type="password" id="admin-password" required>
         </div>
         <p class="auth-card-hint">
-          Demo only: include "admin" or "manager" in the email to preview that role — anything else signs in as Staff. Once the backend exists, your role comes from the staff table automatically.
+          Demo only: include "admin" or "manager" in the email to preview that role — anything else signs in as Staff.
+          Once the backend exists, your role comes from the staff table automatically.
         </p>
         <button type="submit" class="btn btn--primary btn--full">Log in</button>
       </form>
@@ -90,4 +95,5 @@
     });
   </script>
 </body>
+
 </html>

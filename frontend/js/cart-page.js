@@ -12,7 +12,7 @@ const DELIVERY_FEE = 200;
 function cartLineTemplate(item) {
   return `
     <div class="cart-line" data-line-id="${item.product_id}">
-      <img src="${item.photo_url || `https://placehold.co/80x80/D1FAE5/059669?text=${encodeURIComponent(item.name.charAt(0))}`}" alt="${item.name}">
+      <img src="${item.photo_url || `https://placehold.co/80x80/E1F1FB/0074BD?text=${encodeURIComponent(item.name.charAt(0))}`}" alt="${item.name}">
       <div>
         <p class="cart-line-name">${item.name}</p>
         <span class="cart-line-unit-price">KSh ${item.price.toLocaleString('en-KE')} each</span>

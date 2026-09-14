@@ -10,20 +10,17 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
+
     <link rel="stylesheet" href="../css/variables.css">
     <link rel="stylesheet" href="../css/base.css">
     <link rel="stylesheet" href="../css/header.css">
     <link rel="stylesheet" href="../css/dropdowns.css">
     <link rel="stylesheet" href="../css/buttons.css">
-    <link rel="stylesheet" href="../css/home.css">
-    <link rel="stylesheet" href="../css/product-detail.css">
-    <link rel="stylesheet" href="../css/cart-page.css">
-    <link rel="stylesheet" href="../css/modal.css">
+    <link rel="stylesheet" href="../css/product-card.css">
+    <link rel="stylesheet" href="../css/quantity-sheet.css">
     <link rel="stylesheet" href="../css/toast.css">
+    <link rel="stylesheet" href="../css/home.css">
     <link rel="stylesheet" href="../css/responsive.css">
-</head>
-
-
 </head>
 
 <body>
@@ -31,7 +28,7 @@
     <header class="header">
         <div class="container">
             <a class="header-logo-container" href="index.html" aria-label="Abstract Cosmetics — go to home">
-                <img class="header-logo" src="/frontend/assets/images/abstract_logo.png" alt="">
+                <img class="header-logo" src="/frontend/assets/abstract_logo.png" alt="">
                 <span class="header-greeting">Hello, Customer</span>
             </a>
 
@@ -86,10 +83,14 @@
 
     <main>
         <section class="page-section container">
-            <div class="search-bar">
-                <i data-lucide="search"></i>
-                <input type="text" id="product-search"
-                    placeholder="Search by product name (Mega Growth Leave-In) or category (Leave-In)">
+            <div class="search-bar-wrap">
+                <div class="search-bar">
+                    <i data-lucide="search"></i>
+                    <input type="text" id="product-search"
+                        placeholder="Search by product name (Mega Growth Leave-In) or category (Leave-In)"
+                        autocomplete="off">
+                </div>
+                <div class="search-suggestions" id="search-suggestions"></div>
             </div>
         </section>
 
@@ -126,8 +127,8 @@
             </div>
             <div class="footer-contact">
                 <h4>Contact</h4>
-                <a class="footer-contact-item" href="tel:+254700264557" data-tooltip="Tap to call">
-                    <i data-lucide="phone"></i> 0700264557
+                <a class="footer-contact-item" href="tel:+254712345678" data-tooltip="Tap to call">
+                    <i data-lucide="phone"></i> 0712 345 678
                 </a>
                 <a class="footer-contact-item" href="mailto:hello@abstractcosmetics.co.ke"
                     data-tooltip="Send us an email">
@@ -149,6 +150,7 @@
             <h4>No idea where to find us? We've got you.</h4>
             <p>Watch this quick clip for directions straight to our shop.</p>
             <div class="footer-directions-video">
+                <!-- Replace VIDEO_ID and the handle below with your real TikTok directions video -->
                 <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@abstractcosmetics/video/VIDEO_ID"
                     data-video-id="VIDEO_ID">
                     <section>
@@ -163,7 +165,7 @@
         <div class="footer-bottom">&copy; 2026 Abstract Cosmetics. All rights reserved.</div>
     </footer>
 
-    <!--popup opened on the add to cart button press-->
+    <!-- Quantity sheet: opened from a product card's "Add to cart" button -->
     <div class="sheet-overlay" id="quantity-sheet">
         <div class="sheet-panel">
             <div class="sheet-handle"></div>
@@ -195,17 +197,17 @@
             </button>
         </div>
     </div>
+
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <script src="../js/theme.js"></script>
     <script src="../js/api.js"></script>
+    <script src="../js/products.js"></script>
+    <script src="../js/search.js"></script>
     <script src="../js/cart.js"></script>
+    <script src="../js/quantity-sheet.js"></script>
     <script src="../js/notifications.js"></script>
     <script src="../js/main.js"></script>
-    <script src="../js/forms.js"></script>
-    <script src="../js/cart-page.js"></script>
     <script async src="https://www.tiktok.com/embed.js"></script>
-
 </body>
-
 
 </html>

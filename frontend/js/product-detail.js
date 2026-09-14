@@ -22,7 +22,7 @@ function renderProductDetail(product) {
 
   root.innerHTML = `
     <div class="product-detail-media">
-      <img src="${product.photo_url || `https://placehold.co/700x700/D1FAE5/059669?text=${encodeURIComponent(product.name)}`}" alt="${product.name}">
+      <img src="${product.photo_url || `https://placehold.co/700x700/E1F1FB/0074BD?text=${encodeURIComponent(product.name)}`}" alt="${product.name}">
     </div>
     <div>
       <span class="product-detail-category">${product.category}</span>

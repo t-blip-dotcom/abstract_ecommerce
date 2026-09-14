@@ -28,7 +28,7 @@ function openQuantitySheet(product) {
   sheetProduct = product;
 
   document.getElementById('sheet-product-image').src =
-    product.photo_url || `https://placehold.co/160x160/D1FAE5/059669?text=${encodeURIComponent(product.name)}`;
+    product.photo_url || `https://placehold.co/160x160/E1F1FB/0074BD?text=${encodeURIComponent(product.name)}`;
   document.getElementById('sheet-product-name').textContent = product.name;
   document.getElementById('sheet-product-price').textContent =
     window.productsModule ? window.productsModule.formatPrice(product.price) : `KSh ${product.price}`;

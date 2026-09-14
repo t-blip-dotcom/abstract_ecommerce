@@ -26,7 +26,7 @@ const filterState = { category: 'all', brand: 'all', status: 'all', search: '' }
 let editingProductId = null;
 
 function placeholderPhoto(name) {
-  return `https://placehold.co/64x64/D1FAE5/059669?text=${encodeURIComponent((name || 'P').charAt(0))}`;
+  return `https://placehold.co/64x64/E1F1FB/0074BD?text=${encodeURIComponent((name || 'P').charAt(0))}`;
 }
 
 function filteredProducts() {

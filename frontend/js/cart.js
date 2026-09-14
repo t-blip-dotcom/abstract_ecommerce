@@ -75,7 +75,7 @@ function updateCartBadge() {
 function cartPreviewItemTemplate(item) {
   return `
     <li class="cart-preview-item">
-      <img src="${item.photo_url || `https://placehold.co/80x80/D1FAE5/059669?text=${encodeURIComponent(item.name.charAt(0))}`}" alt="${item.name}">
+      <img src="${item.photo_url || `https://placehold.co/80x80/E1F1FB/0074BD?text=${encodeURIComponent(item.name.charAt(0))}`}" alt="${item.name}">
       <div class="cart-preview-details">
         <p class="cart-preview-name">${item.name}</p>
         <span class="cart-preview-meta">${item.quantity} × KSh ${item.price.toLocaleString('en-KE')}</span>

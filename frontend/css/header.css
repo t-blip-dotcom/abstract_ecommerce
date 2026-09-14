@@ -7,7 +7,7 @@
   top: 0;
   z-index: 100;
   height: var(--header-height);
-  background: var(--color-primary);
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
   display: flex;
   align-items: center;
 }
@@ -56,7 +56,8 @@
   gap: var(--space-2);
 }
 
-
+/* Wraps each icon button + its dropdown panel so the panel can be
+   positioned relative to its own trigger, without inline styles. */
 .header-action {
   position: relative;
 }
@@ -99,7 +100,7 @@
   display: none;
 }
 
-
+/* ---- Hover tooltip: explains what each header icon does ---- */
 [data-tooltip] {
   position: relative;
 }
@@ -129,7 +130,7 @@
   transform: translateX(-50%) translateY(0);
 }
 
-
+/* ---- Theme toggle: auto / light / dark, shown as icon + text ---- */
 .theme-toggle {
   display: inline-flex;
   align-items: center;
@@ -140,10 +141,21 @@
   border-radius: 999px;
 }
 
-.theme-icon { display: none; }
-html[data-theme-mode="auto"] .theme-icon-auto { display: inline-flex; }
-html[data-theme-mode="light"] .theme-icon-light { display: inline-flex; }
-html[data-theme-mode="dark"] .theme-icon-dark { display: inline-flex; }
+.theme-icon {
+  display: none;
+}
+
+html[data-theme-mode="auto"] .theme-icon-auto {
+  display: inline-flex;
+}
+
+html[data-theme-mode="light"] .theme-icon-light {
+  display: inline-flex;
+}
+
+html[data-theme-mode="dark"] .theme-icon-dark {
+  display: inline-flex;
+}
 
 .theme-toggle-label {
   font-size: var(--fs-sm);
@@ -151,7 +163,7 @@ html[data-theme-mode="dark"] .theme-icon-dark { display: inline-flex; }
   color: var(--color-text-on-primary);
 }
 
-
+/* ---- Dropdown panels (cart preview / notifications) shared shell ---- */
 .dropdown-panel {
   position: absolute;
   top: calc(var(--header-height) + var(--space-2));

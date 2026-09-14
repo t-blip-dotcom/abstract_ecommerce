@@ -38,7 +38,7 @@
 
 /* ---- Success / error variants ---- */
 .toast--success {
-  background: var(--color-primary);
+  background: var(--color-success);
   color: #fff;
 }
 

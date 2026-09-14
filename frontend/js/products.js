@@ -59,7 +59,7 @@ function productCardTemplate(product) {
         ${outOfStock ? '<span class="product-card-stock-flag">Out of stock</span>' : ''}
         ${!outOfStock && lowStock ? '<span class="product-card-stock-flag">Low stock</span>' : ''}
         <a href="product-detail.html?id=${product.product_id}">
-          <img src="${product.photo_url || `https://placehold.co/400x400/D1FAE5/059669?text=${encodeURIComponent(product.name)}`}" alt="${product.name}" loading="lazy">
+          <img src="${product.photo_url || `https://placehold.co/400x400/E1F1FB/0074BD?text=${encodeURIComponent(product.name)}`}" alt="${product.name}" loading="lazy">
         </a>
       </div>
       <div class="product-card-body">

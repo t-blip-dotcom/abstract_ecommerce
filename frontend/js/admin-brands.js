@@ -19,7 +19,7 @@ let editingBrandId = null;
 function brandRowTemplate(b) {
   return `
     <tr>
-      <td><img class="admin-table-thumb" src="${b.logo_url || `https://placehold.co/64x64/D1FAE5/059669?text=${encodeURIComponent(b.brand_name.charAt(0))}`}" alt=""></td>
+      <td><img class="admin-table-thumb" src="${b.logo_url || `https://placehold.co/64x64/E1F1FB/0074BD?text=${encodeURIComponent(b.brand_name.charAt(0))}`}" alt=""></td>
       <td>${b.brand_name}</td>
       <td>${b.description || '—'}</td>
       <td>
