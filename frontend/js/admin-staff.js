@@ -1,34 +1,48 @@
 /**
  * admin-staff.js
- * Staff management — admin only. Fields mirror the STAFF/ROLE
- * tables: name, email_address, role_id (shown as role name),
- * status, plus read-only created_at/last_login.
+ * Staff management — admin only. Staff no longer sign up with a
+ * company email; they pick a username + password themselves on
+ * admin-login.html, which creates a `pending` row here. An admin
+ * approves (or removes) the request — that's the only step admins
+ * have to do, keeping their workload light.
  * Once the backend exists:
- *   - GET/POST/PATCH/DELETE /api/admin/staff
+ *   - GET    /api/admin/staff
+ *   - POST   /api/admin/staff              (admin-created accounts)
+ *   - PATCH  /api/admin/staff/:id          (edit / approve)
+ *   - DELETE /api/admin/staff/:id
  */
 
 const ROLES = ['admin', 'online_manager', 'staff'];
 const ROLE_LABELS = { admin: 'Admin', online_manager: 'Manager', staff: 'Staff' };
+const STATUS_LABELS = { pending: 'Pending approval', active: 'Active', inactive: 'Inactive' };
 
 let adminStaff = [
-  { staff_id: 1, name: 'Jane Kamau', email_address: 'jane@abstractcosmetics.co.ke', role: 'admin', status: 'active', last_login: '2026-09-12 09:14' },
-  { staff_id: 2, name: 'Peter Otieno', email_address: 'peter.manager@abstractcosmetics.co.ke', role: 'online_manager', status: 'active', last_login: '2026-09-11 16:40' },
-  { staff_id: 3, name: 'Mercy Wambui', email_address: 'mercy@abstractcosmetics.co.ke', role: 'staff', status: 'active', last_login: '2026-09-10 08:02' },
-  { staff_id: 4, name: 'Samuel Kiptoo', email_address: 'samuel@abstractcosmetics.co.ke', role: 'staff', status: 'inactive', last_login: '2026-08-29 12:11' }
+  { staff_id: 1, name: 'Jane Kamau', username: 'admin', role: 'admin', status: 'active', last_login: '2026-09-12 09:14' },
+  { staff_id: 2, name: 'Peter Otieno', username: 'manager', role: 'online_manager', status: 'active', last_login: '2026-09-11 16:40' },
+  { staff_id: 3, name: 'Mercy Wambui', username: 'staff', role: 'staff', status: 'active', last_login: '2026-09-10 08:02' },
+  { staff_id: 4, name: 'Samuel Kiptoo', username: 'samkip', role: 'staff', status: 'inactive', last_login: '2026-08-29 12:11' },
+  { staff_id: 5, name: 'Lucy Nyambura', username: 'lucyn', role: 'staff', status: 'pending', last_login: null }
 ];
 
 let editingStaffId = null;
+
+function statusBadgeClass(status) {
+  if (status === 'active') return 'status-badge--active';
+  if (status === 'pending') return 'status-badge--pending';
+  return 'status-badge--out_of_stock';
+}
 
 function staffRowTemplate(s) {
   return `
     <tr>
       <td>${s.name}</td>
-      <td>${s.email_address}</td>
+      <td>${s.username}</td>
       <td>${ROLE_LABELS[s.role] || s.role}</td>
-      <td><span class="status-badge status-badge--${s.status === 'active' ? 'active' : 'out_of_stock'}">${s.status}</span></td>
+      <td><span class="status-badge ${statusBadgeClass(s.status)}">${STATUS_LABELS[s.status] || s.status}</span></td>
       <td>${s.last_login || '—'}</td>
       <td>
         <div class="table-actions">
+          ${s.status === 'pending' ? `<button data-approve-staff="${s.staff_id}" aria-label="Approve ${s.name}"><i data-lucide="check"></i></button>` : ''}
           <button data-edit-staff="${s.staff_id}" aria-label="Edit ${s.name}"><i data-lucide="pencil"></i></button>
           <button data-delete-staff="${s.staff_id}" aria-label="Remove ${s.name}"><i data-lucide="trash-2"></i></button>
         </div>
@@ -40,8 +54,20 @@ function renderAdminStaff() {
   const tbody = document.getElementById('admin-staff-body');
   if (!tbody) return;
 
-  tbody.innerHTML = adminStaff.map(staffRowTemplate).join('');
+  // Pending requests first, so they don't get missed.
+  const sorted = [...adminStaff].sort((a, b) => (a.status === 'pending' ? -1 : 0) - (b.status === 'pending' ? -1 : 0));
+  tbody.innerHTML = sorted.map(staffRowTemplate).join('');
   if (window.lucide) lucide.createIcons();
+
+  tbody.querySelectorAll('[data-approve-staff]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const staff = adminStaff.find(s => s.staff_id === Number(btn.dataset.approveStaff));
+      if (!staff) return;
+      staff.status = 'active';
+      renderAdminStaff();
+      window.showToast(`${staff.name} approved — they can now log in`, 'success');
+    });
+  });
 
   tbody.querySelectorAll('[data-delete-staff]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -79,9 +105,10 @@ function openStaffModal(staffId) {
 
   if (staff) {
     document.getElementById('staff-name').value = staff.name;
-    document.getElementById('staff-email').value = staff.email_address;
+    document.getElementById('staff-username').value = staff.username;
   }
 
+  window.markFormClean(form);
   overlay.classList.add('is-open');
 }
 
@@ -94,9 +121,12 @@ function initStaffModal() {
   const overlay = document.getElementById('staff-modal');
   const form = document.getElementById('staff-form');
 
+  window.initDirtyTracking(form);
   document.getElementById('add-staff-btn').addEventListener('click', () => openStaffModal(null));
-  document.getElementById('staff-modal-close').addEventListener('click', closeStaffModal);
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeStaffModal(); });
+  document.getElementById('staff-modal-close').addEventListener('click', () => window.confirmDiscard(form, closeStaffModal));
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) window.confirmDiscard(form, closeStaffModal);
+  });
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -104,7 +134,7 @@ function initStaffModal() {
 
     const values = {
       name: document.getElementById('staff-name').value,
-      email_address: document.getElementById('staff-email').value,
+      username: document.getElementById('staff-username').value,
       role: document.getElementById('staff-role').value,
       status: document.getElementById('staff-status').value
     };
@@ -118,6 +148,7 @@ function initStaffModal() {
     }
 
     renderAdminStaff();
+    window.markFormClean(form);
     closeStaffModal();
   });
 }

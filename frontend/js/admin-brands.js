@@ -31,6 +31,10 @@ function brandRowTemplate(b) {
     </tr>`;
 }
 
+function placeholderLogo(name) {
+  return `https://placehold.co/64x64/E1F1FB/0074BD?text=${encodeURIComponent((name || 'B').charAt(0))}`;
+}
+
 function renderAdminBrands() {
   const tbody = document.getElementById('admin-brands-body');
   if (!tbody) return;
@@ -55,6 +59,7 @@ function renderAdminBrands() {
 function openBrandModal(brandId) {
   const overlay = document.getElementById('brand-modal');
   const form = document.getElementById('brand-form');
+  const preview = document.getElementById('brand-logo-preview');
   form.reset();
 
   editingBrandId = brandId || null;
@@ -63,12 +68,14 @@ function openBrandModal(brandId) {
   document.getElementById('brand-modal-title').textContent = brand ? 'Edit brand' : 'Add brand';
   document.getElementById('brand-form-submit').textContent = brand ? 'Save changes' : 'Save brand';
 
+  preview.src = brand?.logo_url || placeholderLogo(brand?.brand_name);
+
   if (brand) {
     document.getElementById('brand-name').value = brand.brand_name;
     document.getElementById('brand-description').value = brand.description || '';
-    document.getElementById('brand-logo-url').value = brand.logo_url || '';
   }
 
+  markFormClean(form);
   overlay.classList.add('is-open');
 }
 
@@ -80,10 +87,23 @@ function closeBrandModal() {
 function initBrandModal() {
   const overlay = document.getElementById('brand-modal');
   const form = document.getElementById('brand-form');
+  const logoInput = document.getElementById('brand-logo');
+  const preview = document.getElementById('brand-logo-preview');
 
+  window.initDirtyTracking(form);
   document.getElementById('add-brand-btn').addEventListener('click', () => openBrandModal(null));
-  document.getElementById('brand-modal-close').addEventListener('click', closeBrandModal);
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeBrandModal(); });
+  document.getElementById('brand-modal-close').addEventListener('click', () => confirmDiscard(form, closeBrandModal));
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) confirmDiscard(form, closeBrandModal);
+  });
+
+  logoInput.addEventListener('change', () => {
+    const file = logoInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => { preview.src = reader.result; };
+    reader.readAsDataURL(file);
+  });
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -92,7 +112,7 @@ function initBrandModal() {
     const values = {
       brand_name: document.getElementById('brand-name').value,
       description: document.getElementById('brand-description').value,
-      logo_url: document.getElementById('brand-logo-url').value
+      logo_url: preview.src.startsWith('data:') ? preview.src : ''
     };
 
     if (editingBrandId) {
@@ -104,6 +124,7 @@ function initBrandModal() {
     }
 
     renderAdminBrands();
+    markFormClean(form);
     closeBrandModal();
   });
 }

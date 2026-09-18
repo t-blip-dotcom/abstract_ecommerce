@@ -165,6 +165,7 @@ function openProductModal(productId) {
   }
 
   overlay.classList.add('is-open');
+  window.markFormClean(form);
 }
 
 function closeProductModal() {
@@ -181,8 +182,12 @@ function initProductModal() {
   const preview = document.getElementById('product-photo-preview');
 
   openBtn?.addEventListener('click', () => openProductModal(null));
-  closeBtn.addEventListener('click', closeProductModal);
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeProductModal(); });
+  closeBtn.addEventListener('click', () => window.confirmDiscard(form, closeProductModal));
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) window.confirmDiscard(form, closeProductModal);
+  });
+
+  window.initDirtyTracking(form);
 
   photoInput.addEventListener('change', () => {
     const file = photoInput.files[0];
@@ -217,6 +222,7 @@ function initProductModal() {
     }
 
     renderAdminProducts();
+    window.markFormClean(form);
     closeProductModal();
   });
 }

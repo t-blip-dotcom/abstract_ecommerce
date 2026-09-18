@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+  <script src="../js/theme-init.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Your Cart — Abstract Cosmetics</title>
@@ -29,7 +30,7 @@
   <header class="header">
     <div class="container">
       <a class="header-logo-container" href="index.html" aria-label="Abstract Cosmetics — go to home">
-        <img class="header-logo" src="/frontend/assets/abstract_logo.png" alt="">
+        <img class="header-logo" src="/frontend/assets/abstract_logo.png" alt="Abstract Cosmetics logo">
         <span class="header-greeting">Hello, Customer</span>
       </a>
 
@@ -130,8 +131,8 @@
       </div>
       <div class="footer-contact">
         <h4>Contact</h4>
-        <a class="footer-contact-item" href="tel:+254712345678" data-tooltip="Tap to call">
-          <i data-lucide="phone"></i> 0712 345 678
+        <a class="footer-contact-item" href="tel:+254700264557" data-tooltip="Tap to call">
+          <i data-lucide="phone"></i> 0700 264 557
         </a>
         <a class="footer-contact-item" href="mailto:hello@abstractcosmetics.co.ke" data-tooltip="Send us an email">
           <i data-lucide="mail"></i> hello@abstractcosmetics.co.ke
@@ -166,7 +167,9 @@
     <div class="footer-bottom">&copy; 2026 Abstract Cosmetics. All rights reserved.</div>
   </footer>
 
-  <!-- Checkout modal: mocks the M-Pesa STK push flow -->
+  <!-- Checkout modal: mocks the M-Pesa STK push flow, plus a choice
+       between physical pickup (QR code) and delivery (cost agreed
+       after ordering, since it depends on size/distance) -->
   <div class="modal-overlay" id="checkout-modal">
     <div class="modal">
       <div class="modal-header">
@@ -180,19 +183,55 @@
             <label for="mpesa-phone">M-Pesa phone number</label>
             <input type="tel" id="mpesa-phone" placeholder="07XX XXX XXX" required>
           </div>
+
           <div class="field">
-            <label for="shipping-address">Shipping address</label>
-            <input type="text" id="shipping-address" placeholder="Street, estate, town" required>
+            <label>How will you get your order?</label>
+            <div class="fulfillment-options">
+              <label class="fulfillment-option">
+                <input type="radio" name="fulfillment-method" value="pickup" id="fulfillment-pickup" checked>
+                <span>
+                  <strong>Pickup</strong>
+                  <small>Collect in person — we'll give you a pickup code and QR to show us.</small>
+                </span>
+              </label>
+              <label class="fulfillment-option">
+                <input type="radio" name="fulfillment-method" value="delivery" id="fulfillment-delivery">
+                <span>
+                  <strong>Delivery</strong>
+                  <small>We'll contact you to arrange transport and agree on the cost — it depends on package size and
+                    distance, so it isn't fixed upfront.</small>
+                </span>
+              </label>
+            </div>
           </div>
+
+          <div class="field" id="shipping-address-field">
+            <label for="shipping-address">Delivery address</label>
+            <input type="text" id="shipping-address" placeholder="Street, estate, town">
+          </div>
+
           <button type="submit" class="btn btn--primary btn--full">Send STK push</button>
         </form>
       </div>
 
       <div id="checkout-success-step" class="is-hidden">
-        <div class="modal-success">
+        <div class="modal-success" id="checkout-success-pickup">
           <i data-lucide="check-circle"></i>
           <h3>Payment request sent</h3>
           <p>Check your phone and enter your M-Pesa PIN to complete the payment.</p>
+          <p>Once it's confirmed, bring this pickup code and QR when you collect your order — we'll scan it to pull up
+            your details.</p>
+          <p class="pickup-code" id="pickup-code"></p>
+          <img class="pickup-qr" id="pickup-qr" src="" alt="Pickup QR code">
+          <a href="index.html" class="btn btn--primary btn--full">Go back to home</a>
+        </div>
+
+        <div class="modal-success is-hidden" id="checkout-success-delivery">
+          <i data-lucide="check-circle"></i>
+          <h3>Payment request sent</h3>
+          <p>Check your phone and enter your M-Pesa PIN to complete the payment.</p>
+          <p>We'll contact you shortly to arrange transport and agree on the delivery cost, since that depends on the
+            size of your order and the distance.</p>
           <a href="index.html" class="btn btn--primary btn--full">Go back to home</a>
         </div>
       </div>
@@ -207,6 +246,7 @@
   <script src="../js/main.js"></script>
   <script src="../js/forms.js"></script>
   <script src="../js/cart-page.js"></script>
+  <script src="../js/theme-init.js"></script>
   <script async src="https://www.tiktok.com/embed.js"></script>
 </body>
 

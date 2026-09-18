@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+  <script src="../js/theme-init.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Staff — Abstract Cosmetics Admin</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
 
   <link rel="stylesheet" href="../css/variables.css">
   <link rel="stylesheet" href="../css/base.css">
@@ -17,6 +21,7 @@
   <link rel="stylesheet" href="../css/toast.css">
   <link rel="stylesheet" href="../css/responsive.css">
 </head>
+
 <body>
 
   <div class="admin-layout">
@@ -26,6 +31,9 @@
       </div>
       <p class="admin-sidebar-role" id="admin-role-label"></p>
       <nav class="admin-nav" id="admin-nav"></nav>
+      <a class="admin-sidebar-logout" href="index.html">
+        <i data-lucide="store"></i> View store
+      </a>
       <button class="admin-sidebar-logout" id="admin-logout" type="button">
         <i data-lucide="log-out"></i> Log out
       </button>
@@ -43,7 +51,14 @@
       <div class="data-table-wrap">
         <table class="data-table">
           <thead>
-            <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Last login</th><th>Actions</th></tr>
+            <tr>
+              <th>Name</th>
+              <th>Username</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Last login</th>
+              <th>Actions</th>
+            </tr>
           </thead>
           <tbody id="admin-staff-body"></tbody>
         </table>
@@ -63,8 +78,8 @@
           <input type="text" id="staff-name" required>
         </div>
         <div class="field">
-          <label for="staff-email">Email address</label>
-          <input type="email" id="staff-email" required>
+          <label for="staff-username">Username</label>
+          <input type="text" id="staff-username" required>
         </div>
         <div class="field">
           <label for="staff-role">Role</label>
@@ -73,6 +88,7 @@
         <div class="field">
           <label for="staff-status">Status</label>
           <select id="staff-status" required>
+            <option value="pending">Pending approval</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
@@ -88,5 +104,7 @@
   <script src="../js/forms.js"></script>
   <script src="../js/admin-shared.js"></script>
   <script src="../js/admin-staff.js"></script>
+  <script src="../js/theme-init.js"></script>
 </body>
+
 </html>

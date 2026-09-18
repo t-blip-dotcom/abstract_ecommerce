@@ -4,7 +4,7 @@
  * a read-only view of every order. Once the backend exists, these
  * come from aggregate queries, e.g.:
  *   - SELECT SUM(amount_paid) ... GROUP BY DATE(order_date)
- *   - SELECT * FROM products WHERE stock_quantity <= 5
+ *   - SELECT * FROM products WHERE stock_quantity < 15 (0 = out of stock)
  *   - SELECT * FROM orders JOIN customers ...
  */
 

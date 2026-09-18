@@ -6,6 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Staff Login — Abstract Cosmetics</title>
 
+  <script src="../js/theme-init.js"></script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link
     href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
@@ -25,8 +27,8 @@
   <header class="header">
     <div class="container">
       <a class="header-logo-container" href="index.html" aria-label="Abstract Cosmetics — go to home">
-        <img class="header-logo" src="/frontend/assets/abstract_logo.png" alt="">
-
+        <img class="header-logo" src="/frontend/assets/abstract_logo.png" alt="Abstract Cosmetics logo">
+        <span class="header-greeting">Abstract Cosmetics</span>
       </a>
       <div class="header-actions">
         <button class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle color theme">
@@ -42,25 +44,54 @@
   <main class="auth-page">
     <div class="auth-card">
       <div class="auth-card-brand">
-        <img src="/frontend/assets/abstract_logo.png" alt="">
+        <img class="header-logo" src="/frontend/assets/abstract_logo.png" alt="Abstract Cosmetics logo">
         <h2>Staff sign in</h2>
-        <p class="auth-card-subtitle">For shop admins, managers, and staff only.</p>
+        <p class="auth-card-subtitle">For approved shop admins, managers, and staff.</p>
       </div>
 
-      <form id="admin-login-form">
+      <div class="auth-tabs">
+        <button class="is-active" data-auth-tab="login">Log in</button>
+        <button data-auth-tab="request">Request staff access</button>
+      </div>
+
+      <form id="staff-login-form" class="auth-form is-active" data-auth-form="login">
         <div class="field">
-          <label for="admin-email">Staff email</label>
-          <input type="email" id="admin-email" placeholder="e.g. jane@abstractcosmetics.co.ke" required>
+          <label for="staff-username">Username</label>
+          <input type="text" id="staff-username" autocomplete="username" required>
         </div>
         <div class="field">
-          <label for="admin-password">Password</label>
-          <input type="password" id="admin-password" required>
+          <label for="staff-password">Password</label>
+          <input type="password" id="staff-password" autocomplete="current-password" required>
         </div>
         <p class="auth-card-hint">
-          Demo only: include "admin" or "manager" in the email to preview that role — anything else signs in as Staff.
-          Once the backend exists, your role comes from the staff table automatically.
+          Demo only: usernames "admin" / "manager" / "staff" are pre-approved for previewing each role. Any other
+          username shows what an unapproved account sees. Once the backend exists, this checks the real staff table.
         </p>
         <button type="submit" class="btn btn--primary btn--full">Log in</button>
+      </form>
+
+      <form id="staff-request-form" class="auth-form" data-auth-form="request">
+        <div class="field">
+          <label for="request-name">Full name</label>
+          <input type="text" id="request-name" required>
+        </div>
+        <div class="field">
+          <label for="request-username">Choose a username</label>
+          <input type="text" id="request-username" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="request-password">Choose a password</label>
+          <input type="password" id="request-password" autocomplete="new-password" required>
+        </div>
+        <div class="field">
+          <label for="request-password-confirm">Confirm password</label>
+          <input type="password" id="request-password-confirm" autocomplete="new-password" required>
+        </div>
+        <p class="auth-card-hint">
+          You'll be able to log in once an admin reviews and approves your account — this keeps the admin side secure
+          without adding to their workload for every hire.
+        </p>
+        <button type="submit" class="btn btn--primary btn--full">Submit request</button>
       </form>
 
       <p class="auth-card-footer-link">Not staff? <a href="login.html">Customer log in</a></p>
@@ -71,27 +102,82 @@
   <script src="../js/theme.js"></script>
   <script src="../js/main.js"></script>
   <script src="../js/forms.js"></script>
+  <script src="../js/theme-init.js"></script>
   <script>
-    // Mock only: once the backend exists, POST /api/auth/staff-login
-    // returns { name, role } from the staff/role tables, and this
-    // heuristic goes away entirely.
-    document.getElementById('admin-login-form').addEventListener('submit', (e) => {
+    /**
+     * Mock only. Once the backend exists:
+     *  - login posts to /api/auth/staff-login, which checks the
+     *    username + password hash and staff.status = 'approved'
+     *  - the request form posts to /api/auth/staff-request, which
+     *    inserts a STAFF row with status = 'pending' for an admin
+     *    to review on the Staff page
+     */
+    const APPROVED_DEMO_STAFF = {
+      admin: { role: 'admin', name: 'Jane Kamau' },
+      manager: { role: 'online_manager', name: 'Peter Otieno' },
+      staff: { role: 'staff', name: 'Mercy Wambui' }
+    };
+
+    // ---- Tab switching ----
+    const tabs = document.querySelectorAll('[data-auth-tab]');
+    const forms = document.querySelectorAll('[data-auth-form]');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('is-active'));
+        forms.forEach(f => f.classList.remove('is-active'));
+        tab.classList.add('is-active');
+        document.querySelector(`[data-auth-form="${tab.dataset.authTab}"]`).classList.add('is-active');
+      });
+    });
+
+    // ---- Log in ----
+    document.getElementById('staff-login-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const form = e.target;
       if (!window.validateForm(form)) return;
 
-      const email = document.getElementById('admin-email').value.toLowerCase();
-      let role = 'staff';
-      if (email.includes('admin')) role = 'admin';
-      else if (email.includes('manager')) role = 'online_manager';
+      const username = document.getElementById('staff-username').value.trim().toLowerCase();
+      const match = APPROVED_DEMO_STAFF[username];
 
-      const name = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      if (!match) {
+        window.showToast("You're not an approved staff member yet. Ask an admin for approval, or use the customer login.", 'error');
+        return;
+      }
 
-      localStorage.setItem('cosmeticshop_staff_role', role);
-      localStorage.setItem('cosmeticshop_staff_name', name || 'Staff member');
-
+      localStorage.setItem('cosmeticshop_staff_role', match.role);
+      localStorage.setItem('cosmeticshop_staff_name', match.name);
       window.showToast('Logged in successfully.', 'success');
       window.location.href = 'admin-products.html';
+    });
+
+    // ---- Request staff access ----
+    document.getElementById('staff-request-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const form = e.target;
+      if (!window.validateForm(form)) return;
+
+      const password = document.getElementById('request-password');
+      const confirm = document.getElementById('request-password-confirm');
+      const confirmField = confirm.closest('.field');
+
+      if (password.value !== confirm.value) {
+        confirmField.classList.add('has-error');
+        let errorEl = confirmField.querySelector('.field-error');
+        if (!errorEl) {
+          errorEl = document.createElement('span');
+          errorEl.className = 'field-error';
+          confirmField.appendChild(errorEl);
+        }
+        errorEl.textContent = "Passwords don't match — please re-enter them.";
+        window.showToast("Those passwords don't match.", 'error');
+        confirm.focus();
+        return;
+      }
+      confirmField.classList.remove('has-error');
+
+      window.showToast('Request submitted! An admin will review and approve your account.', 'success');
+      form.reset();
+      document.querySelector('[data-auth-tab="login"]').click();
     });
   </script>
 </body>

@@ -50,7 +50,7 @@ async function loadProducts() {
 }
 
 function productCardTemplate(product) {
-  const lowStock = product.stock_quantity > 0 && product.stock_quantity <= 5;
+  const lowStock = product.stock_quantity > 0 && product.stock_quantity <= 15;
   const outOfStock = product.stock_quantity === 0;
 
   return `

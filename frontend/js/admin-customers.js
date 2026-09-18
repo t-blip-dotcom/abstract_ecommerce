@@ -59,6 +59,7 @@ function openCustomerModal(customerId) {
   document.getElementById('customer-address').value = customer.address || '';
   document.getElementById('customer-email').value = customer.email_address || '';
 
+  window.markFormClean(form);
   overlay.classList.add('is-open');
 }
 
@@ -71,8 +72,11 @@ function initCustomerModal() {
   const overlay = document.getElementById('customer-modal');
   const form = document.getElementById('customer-form');
 
-  document.getElementById('customer-modal-close').addEventListener('click', closeCustomerModal);
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeCustomerModal(); });
+  window.initDirtyTracking(form);
+  document.getElementById('customer-modal-close').addEventListener('click', () => window.confirmDiscard(form, closeCustomerModal));
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) window.confirmDiscard(form, closeCustomerModal);
+  });
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -88,6 +92,7 @@ function initCustomerModal() {
     });
 
     renderAdminCustomers();
+    window.markFormClean(form);
     closeCustomerModal();
     window.showToast('Customer details updated', 'success');
   });

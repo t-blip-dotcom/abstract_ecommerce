@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+  <script src="../js/theme-init.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Categories — Abstract Cosmetics Admin</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
 
   <link rel="stylesheet" href="../css/variables.css">
   <link rel="stylesheet" href="../css/base.css">
@@ -17,6 +21,7 @@
   <link rel="stylesheet" href="../css/toast.css">
   <link rel="stylesheet" href="../css/responsive.css">
 </head>
+
 <body>
 
   <div class="admin-layout">
@@ -26,6 +31,9 @@
       </div>
       <p class="admin-sidebar-role" id="admin-role-label"></p>
       <nav class="admin-nav" id="admin-nav"></nav>
+      <a class="admin-sidebar-logout" href="index.html">
+        <i data-lucide="store"></i> View store
+      </a>
       <button class="admin-sidebar-logout" id="admin-logout" type="button">
         <i data-lucide="log-out"></i> Log out
       </button>
@@ -43,7 +51,11 @@
       <div class="data-table-wrap">
         <table class="data-table">
           <thead>
-            <tr><th>Category</th><th>Description</th><th>Actions</th></tr>
+            <tr>
+              <th>Category</th>
+              <th>Description</th>
+              <th>Actions</th>
+            </tr>
           </thead>
           <tbody id="admin-categories-body"></tbody>
         </table>
@@ -77,5 +89,7 @@
   <script src="../js/forms.js"></script>
   <script src="../js/admin-shared.js"></script>
   <script src="../js/admin-categories.js"></script>
+  <script src="../js/theme-init.js"></script>
 </body>
+
 </html>

@@ -37,7 +37,7 @@ function openQuantitySheet(product) {
   qtyInput.value = 1;
 
   const stockNote = document.getElementById('sheet-stock-note');
-  stockNote.textContent = product.stock_quantity <= 5
+  stockNote.textContent = product.stock_quantity <= 15
     ? `Only ${product.stock_quantity} left in stock`
     : '';
 

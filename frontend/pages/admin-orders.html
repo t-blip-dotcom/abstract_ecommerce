@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+  <script src="../js/theme-init.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Orders — Abstract Cosmetics Admin</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
 
   <link rel="stylesheet" href="../css/variables.css">
   <link rel="stylesheet" href="../css/base.css">
@@ -16,6 +20,7 @@
   <link rel="stylesheet" href="../css/toast.css">
   <link rel="stylesheet" href="../css/responsive.css">
 </head>
+
 <body>
 
   <div class="admin-layout">
@@ -25,6 +30,9 @@
       </div>
       <p class="admin-sidebar-role" id="admin-role-label"></p>
       <nav class="admin-nav" id="admin-nav"></nav>
+      <a class="admin-sidebar-logout" href="index.html">
+        <i data-lucide="store"></i> View store
+      </a>
       <button class="admin-sidebar-logout" id="admin-logout" type="button">
         <i data-lucide="log-out"></i> Log out
       </button>
@@ -39,7 +47,8 @@
       </div>
 
       <div class="view-only-banner is-hidden" id="orders-view-only-banner">
-        <i data-lucide="eye"></i> You can update order status, but other order details are managed by admins and managers.
+        <i data-lucide="eye"></i> You can update order status, but other order details are managed by admins and
+        managers.
       </div>
 
       <div class="admin-filter-bar">
@@ -70,7 +79,14 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th>Order</th><th>Customer</th><th>Date</th><th>Payment method</th><th>Payment status</th><th>Amount</th><th>Processed by</th><th>Status</th>
+              <th>Order</th>
+              <th>Customer</th>
+              <th>Date</th>
+              <th>Payment method</th>
+              <th>Payment status</th>
+              <th>Amount</th>
+              <th>Processed by</th>
+              <th>Status</th>
             </tr>
           </thead>
           <tbody id="admin-orders-body"></tbody>
@@ -84,5 +100,7 @@
   <script src="../js/main.js"></script>
   <script src="../js/admin-shared.js"></script>
   <script src="../js/admin-orders.js"></script>
+  <script src="../js/theme-init.js"></script>
 </body>
+
 </html>

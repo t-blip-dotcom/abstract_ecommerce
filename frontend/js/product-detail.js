@@ -8,7 +8,7 @@ function stockInfo(product) {
   if (product.stock_quantity === 0) {
     return { label: 'Out of stock', className: 'out-of-stock', disabled: true };
   }
-  if (product.stock_quantity <= 5) {
+  if (product.stock_quantity <= 15) {
     return { label: `Only ${product.stock_quantity} left in stock`, className: 'low-stock', disabled: false };
   }
   return { label: 'In stock', className: 'in-stock', disabled: false };

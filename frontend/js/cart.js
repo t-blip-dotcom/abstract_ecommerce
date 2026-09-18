@@ -61,7 +61,9 @@ function getTotal() {
 }
 
 function getItemCount() {
-  return readCart().reduce((sum, i) => sum + i.quantity, 0);
+  // Number of distinct products in the cart, not the summed quantity —
+  // the badge answers "how many different things are in here?"
+  return readCart().length;
 }
 
 function updateCartBadge() {

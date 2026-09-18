@@ -25,9 +25,6 @@
 }
 
 .auth-card-brand img {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
   margin: 0 auto var(--space-3);
 }
 

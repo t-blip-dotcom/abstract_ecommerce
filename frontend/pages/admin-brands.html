@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+  <script src="../js/theme-init.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Brands — Abstract Cosmetics Admin</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
 
   <link rel="stylesheet" href="../css/variables.css">
   <link rel="stylesheet" href="../css/base.css">
@@ -17,6 +21,7 @@
   <link rel="stylesheet" href="../css/toast.css">
   <link rel="stylesheet" href="../css/responsive.css">
 </head>
+
 <body>
 
   <div class="admin-layout">
@@ -26,6 +31,9 @@
       </div>
       <p class="admin-sidebar-role" id="admin-role-label"></p>
       <nav class="admin-nav" id="admin-nav"></nav>
+      <a class="admin-sidebar-logout" href="index.html">
+        <i data-lucide="store"></i> View store
+      </a>
       <button class="admin-sidebar-logout" id="admin-logout" type="button">
         <i data-lucide="log-out"></i> Log out
       </button>
@@ -43,7 +51,12 @@
       <div class="data-table-wrap">
         <table class="data-table">
           <thead>
-            <tr><th>Logo</th><th>Brand</th><th>Description</th><th>Actions</th></tr>
+            <tr>
+              <th>Logo</th>
+              <th>Brand</th>
+              <th>Description</th>
+              <th>Actions</th>
+            </tr>
           </thead>
           <tbody id="admin-brands-body"></tbody>
         </table>
@@ -67,8 +80,14 @@
           <input type="text" id="brand-description">
         </div>
         <div class="field">
-          <label for="brand-logo-url">Logo URL</label>
-          <input type="text" id="brand-logo-url" placeholder="https://...">
+          <label for="brand-logo">Brand logo</label>
+          <div class="photo-upload">
+            <img class="photo-upload-preview" id="brand-logo-preview" src="" alt="">
+            <div class="photo-upload-input-wrap">
+              <input type="file" id="brand-logo" accept="image/*">
+              <p class="photo-upload-hint">PNG or JPG, square images look best.</p>
+            </div>
+          </div>
         </div>
         <button type="submit" class="btn btn--primary btn--full" id="brand-form-submit">Save brand</button>
       </form>
@@ -81,5 +100,7 @@
   <script src="../js/forms.js"></script>
   <script src="../js/admin-shared.js"></script>
   <script src="../js/admin-brands.js"></script>
+  <script src="../js/theme-init.js"></script>
 </body>
+
 </html>

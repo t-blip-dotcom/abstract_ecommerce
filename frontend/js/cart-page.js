@@ -98,6 +98,32 @@ function attachLineHandlers() {
   });
 }
 
+function generatePickupCode() {
+  const random = Math.random().toString(36).slice(2, 7).toUpperCase();
+  return `PU-${random}`;
+}
+
+function initFulfillmentToggle() {
+  const pickupRadio = document.getElementById('fulfillment-pickup');
+  const deliveryRadio = document.getElementById('fulfillment-delivery');
+  const addressField = document.getElementById('shipping-address-field');
+  const addressInput = document.getElementById('shipping-address');
+
+  function sync() {
+    const isDelivery = deliveryRadio.checked;
+    addressField.classList.toggle('is-hidden', !isDelivery);
+    addressInput.required = isDelivery;
+    if (!isDelivery) {
+      addressField.classList.remove('has-error');
+      addressInput.value = '';
+    }
+  }
+
+  pickupRadio.addEventListener('change', sync);
+  deliveryRadio.addEventListener('change', sync);
+  sync();
+}
+
 function initCheckoutModal() {
   const overlay = document.getElementById('checkout-modal');
   const openBtn = document.getElementById('checkout-btn');
@@ -105,8 +131,12 @@ function initCheckoutModal() {
   const form = document.getElementById('checkout-form');
   const formStep = document.getElementById('checkout-form-step');
   const successStep = document.getElementById('checkout-success-step');
+  const successPickup = document.getElementById('checkout-success-pickup');
+  const successDelivery = document.getElementById('checkout-success-delivery');
 
   if (!overlay || !openBtn) return;
+
+  initFulfillmentToggle();
 
   openBtn.addEventListener('click', () => {
     formStep.classList.remove('is-hidden');
@@ -143,21 +173,40 @@ function initCheckoutModal() {
     }
     phoneField.classList.remove('has-error');
 
+    const isPickup = document.getElementById('fulfillment-pickup').checked;
     const submitBtn = form.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
     submitBtn.textContent = 'Sending STK push...';
 
-    // Mock delay — replace with a real POST /api/payments/mpesa/stk-push call.
+    // Mock delay — replace with a real POST /api/orders + POST
+    // /api/payments/mpesa/stk-push call. The pickup code/QR below
+    // should come back from that order-creation response instead
+    // of being generated in the browser.
     setTimeout(() => {
       formStep.classList.add('is-hidden');
       successStep.classList.remove('is-hidden');
+
+      if (isPickup) {
+        const code = generatePickupCode();
+        document.getElementById('pickup-code').textContent = code;
+        // Demo QR via a public QR image API — swap for a QR image the
+        // backend generates and returns once that endpoint exists.
+        document.getElementById('pickup-qr').src =
+          `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(code)}`;
+        successPickup.classList.remove('is-hidden');
+        successDelivery.classList.add('is-hidden');
+        window.showToast('Order placed — check your phone to complete payment.', 'success');
+      } else {
+        successPickup.classList.add('is-hidden');
+        successDelivery.classList.remove('is-hidden');
+        window.showToast('Order placed — we\'ll be in touch about delivery.', 'success');
+      }
+
       if (window.lucide) lucide.createIcons();
       localStorage.removeItem('cosmeticshop_cart');
-      window.cartModule.readCart(); // no-op, kept for clarity of intent
       document.getElementById('cart-badge').textContent = 0;
       submitBtn.disabled = false;
       submitBtn.textContent = 'Send STK push';
-      window.showToast('Payment request sent — check your phone.', 'success');
     }, 1400);
   });
 }

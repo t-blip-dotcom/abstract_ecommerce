@@ -67,6 +67,7 @@ function openCategoryModal(categoryId) {
   }
 
   overlay.classList.add('is-open');
+  window.markFormClean(form);
 }
 
 function closeCategoryModal() {
@@ -78,9 +79,12 @@ function initCategoryModal() {
   const overlay = document.getElementById('category-modal');
   const form = document.getElementById('category-form');
 
+  window.initDirtyTracking(form);
   document.getElementById('add-category-btn').addEventListener('click', () => openCategoryModal(null));
-  document.getElementById('category-modal-close').addEventListener('click', closeCategoryModal);
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeCategoryModal(); });
+  document.getElementById('category-modal-close').addEventListener('click', () => window.confirmDiscard(form, closeCategoryModal));
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) window.confirmDiscard(form, closeCategoryModal);
+  });
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -100,6 +104,7 @@ function initCategoryModal() {
     }
 
     renderAdminCategories();
+    window.markFormClean(form);
     closeCategoryModal();
   });
 }

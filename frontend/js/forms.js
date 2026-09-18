@@ -73,3 +73,33 @@ document.addEventListener('input', (e) => {
 });
 
 window.validateForm = validateForm;
+
+/**
+ * Unsaved-changes protection for admin modals. Call initDirtyTracking(form)
+ * once when the page loads, markFormClean(form) whenever the form is
+ * freshly opened or successfully saved, and route every close/cancel/
+ * outside-click through confirmDiscard(form, reallyClose) instead of
+ * calling the close function directly.
+ */
+function initDirtyTracking(form) {
+  if (!form) return;
+  form.dataset.dirty = 'false';
+  form.addEventListener('input', () => { form.dataset.dirty = 'true'; });
+  form.addEventListener('change', () => { form.dataset.dirty = 'true'; });
+}
+
+function markFormClean(form) {
+  if (form) form.dataset.dirty = 'false';
+}
+
+function confirmDiscard(form, onConfirmedClose) {
+  if (form && form.dataset.dirty === 'true') {
+    const leave = window.confirm('You have unsaved changes. Leave without saving?');
+    if (!leave) return;
+  }
+  onConfirmedClose();
+}
+
+window.initDirtyTracking = initDirtyTracking;
+window.markFormClean = markFormClean;
+window.confirmDiscard = confirmDiscard;
