@@ -26,7 +26,7 @@
   <header class="header">
     <div class="container">
       <a class="header-logo-container" href="index.html" aria-label="Abstract Cosmetics — go to home">
-        <img class="header-logo" src="/frontend/assets/abstract_logo.png" alt="Abstract Cosmetics logo">
+        <img class="header-logo" src="../assets/abstract_logo.png" alt="Abstract Cosmetics logo">
         <span class="header-greeting">Abstract Cosmetics</span>
       </a>
       <div class="header-actions">
@@ -43,7 +43,7 @@
   <main class="auth-page">
     <div class="auth-card">
       <div class="auth-card-brand">
-        <img class="header-logo" src="/frontend/assets/abstract_logo.png" alt="Abstract Cosmetics logo">
+        <img class="header-logo" src="../assets/abstract_logo.png" alt="Abstract Cosmetics logo">
         <h2>Welcome back</h2>
       </div>
 
@@ -52,7 +52,7 @@
         <button data-auth-tab="register">Create account</button>
       </div>
 
-      <form id="login-form" class="auth-form is-active" data-auth-form="login">
+      <form id="login-form" novalidate class="auth-form is-active" data-auth-form="login">
         <div class="field">
           <label for="login-email">Email</label>
           <input type="email" id="login-email" required>
@@ -64,7 +64,7 @@
         <button type="submit" class="btn btn--primary btn--full">Log in</button>
       </form>
 
-      <form id="register-form" class="auth-form" data-auth-form="register">
+      <form id="register-form" novalidate class="auth-form" data-auth-form="register">
         <div class="field">
           <label for="register-name">Full name</label>
           <input type="text" id="register-name" required>
@@ -91,7 +91,9 @@
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <script src="../js/theme.js"></script>
   <script src="../js/main.js"></script>
+  <script src="../js/api.js"></script>
   <script src="../js/forms.js"></script>
+  <script src="../js/cart.js"></script>
   <script src="../js/auth.js"></script>
   <script src="../js/theme-init.js"></script>
 </body>

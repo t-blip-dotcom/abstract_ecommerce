@@ -237,11 +237,25 @@ async function markPickupCollected(orderId, staffId) {
   return rows[0] || null;
 }
 
+async function getOrderItems(orderId) {
+  const { rows } = await pool.query(
+    `SELECT oi.order_item_id, oi.quantity, p.product_id, p.name, p.price,
+            (oi.quantity * p.price) AS subtotal
+     FROM order_items oi
+     JOIN products p ON p.product_id = oi.product_id
+     WHERE oi.order_id = $1
+     ORDER BY oi.order_item_id ASC`,
+    [orderId]
+  );
+  return rows;
+}
+
 module.exports = {
   createOrderFromCart,
   listOrders,
   getCustomerOrders,
   updateOrderStatus,
   findByPickupCode,
-  markPickupCollected
+  markPickupCollected,
+  getOrderItems
 };

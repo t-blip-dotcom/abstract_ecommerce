@@ -26,6 +26,32 @@
   font-size: var(--fs-md);
 }
 
+/* ---- Mobile: collapsible drawer instead of a scrolling nav row ---- */
+.admin-sidebar-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-sidebar-toggle {
+  display: none;
+  /* only shown on mobile, see the media query below */
+  color: #fff;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+}
+
+.admin-sidebar-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.admin-sidebar-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  flex: 1;
+}
+
 .admin-nav {
   display: flex;
   flex-direction: column;
@@ -356,12 +382,26 @@
   }
 
   .admin-sidebar {
-    flex-direction: row;
+    padding: var(--space-4) var(--space-5);
+    gap: 0;
+  }
+
+  .admin-sidebar-toggle {
+    display: inline-flex;
     align-items: center;
-    overflow-x: auto;
+    justify-content: center;
+  }
+
+  .admin-sidebar-panel {
+    display: none;
+    margin-top: var(--space-4);
+  }
+
+  .admin-sidebar-panel.is-open {
+    display: flex;
   }
 
   .admin-nav {
-    flex-direction: row;
+    flex: none;
   }
 }

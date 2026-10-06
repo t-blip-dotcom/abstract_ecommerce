@@ -1,25 +1,35 @@
 /**
  * cart-page.js
- * Full cart view (as opposed to the header preview in cart.js).
- * Reads/writes through window.cartModule so both stay in sync.
- * Checkout opens a modal that mocks the M-Pesa STK push flow —
- * wire this to POST /api/orders + POST /api/payments/mpesa/stk-push
- * once the backend exists.
+ * Full cart view. Reads/writes through window.cartModule (cart.js),
+ * which itself talks to the server once the person is logged in, or
+ * localStorage before that.
+ *
+ * Checkout requires login — clicking it while logged out sends the
+ * person to login.html and back here afterward, per the flow you
+ * described. Real order creation is one call to POST
+ * /api/orders/checkout; if the backend reports some items sold out
+ * in the meantime, that gets reflected right in the cart instead of
+ * just failing silently.
  */
 
 const DELIVERY_FEE = 200;
+let cartItems = [];
 
 function cartLineTemplate(item) {
+  const soldOut = item.is_available === false;
+  const thumb = api.assetUrl(item.photo_url) || `https://placehold.co/80x80/E1F1FB/0074BD?text=${encodeURIComponent(item.name.charAt(0))}`;
+
   return `
-    <div class="cart-line" data-line-id="${item.product_id}">
-      <img src="${item.photo_url || `https://placehold.co/80x80/E1F1FB/0074BD?text=${encodeURIComponent(item.name.charAt(0))}`}" alt="${item.name}">
+    <div class="cart-line ${soldOut ? 'cart-line--sold-out' : ''}" data-line-id="${item.product_id}">
+      <img src="${thumb}" alt="${item.name}">
       <div>
         <p class="cart-line-name">${item.name}</p>
         <span class="cart-line-unit-price">KSh ${item.price.toLocaleString('en-KE')} each</span>
+        ${soldOut ? '<span class="cart-line-unavailable-note">Sold out — remove or reduce quantity to continue</span>' : ''}
         <div class="quantity-stepper cart-line-quantity-stepper">
-          <button type="button" data-decrease="${item.product_id}" aria-label="Decrease quantity">&minus;</button>
-          <input type="text" value="${item.quantity}" data-qty-input="${item.product_id}" inputmode="numeric" aria-label="Quantity">
-          <button type="button" data-increase="${item.product_id}" aria-label="Increase quantity">+</button>
+          <button type="button" data-decrease="${item.product_id}" aria-label="Decrease quantity" ${soldOut ? 'disabled' : ''}>&minus;</button>
+          <input type="text" value="${item.quantity}" data-qty-input="${item.product_id}" inputmode="numeric" aria-label="Quantity" ${soldOut ? 'disabled' : ''}>
+          <button type="button" data-increase="${item.product_id}" aria-label="Increase quantity" ${soldOut ? 'disabled' : ''}>+</button>
         </div>
       </div>
       <span class="cart-line-total">KSh ${(item.price * item.quantity).toLocaleString('en-KE')}</span>
@@ -29,16 +39,16 @@ function cartLineTemplate(item) {
     </div>`;
 }
 
-function renderCartPage() {
+async function renderCartPage() {
   const list = document.getElementById('cart-lines');
   const emptyState = document.getElementById('cart-empty-state');
   const summary = document.getElementById('order-summary');
   const checkoutBtn = document.getElementById('checkout-btn');
   if (!list) return;
 
-  const items = window.cartModule.readCart();
+  cartItems = await window.cartModule.readCart();
 
-  if (items.length === 0) {
+  if (cartItems.length === 0) {
     list.innerHTML = '';
     emptyState.classList.remove('is-hidden');
     summary.classList.add('is-hidden');
@@ -46,85 +56,128 @@ function renderCartPage() {
   } else {
     emptyState.classList.add('is-hidden');
     summary.classList.remove('is-hidden');
-    list.innerHTML = items.map(cartLineTemplate).join('');
+    list.innerHTML = cartItems.map(cartLineTemplate).join('');
 
-    const subtotal = window.cartModule.getTotal();
+    const subtotal = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
     document.getElementById('summary-subtotal').textContent = `KSh ${subtotal.toLocaleString('en-KE')}`;
     document.getElementById('summary-delivery').textContent = `KSh ${DELIVERY_FEE.toLocaleString('en-KE')}`;
     document.getElementById('summary-total').textContent = `KSh ${(subtotal + DELIVERY_FEE).toLocaleString('en-KE')}`;
+
+    // Block checkout while anything in the cart just sold out.
+    checkoutBtn.disabled = cartItems.some(i => i.is_available === false);
   }
 
   if (window.lucide) lucide.createIcons();
   attachLineHandlers();
 }
 
+function findItem(productId) {
+  return cartItems.find(i => i.product_id === productId);
+}
+
 function attachLineHandlers() {
   document.querySelectorAll('[data-remove]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      window.cartModule.removeItem(Number(btn.dataset.remove));
-      renderCartPage();
+    btn.addEventListener('click', async () => {
+      const item = findItem(Number(btn.dataset.remove));
+      if (item) {
+        await window.cartModule.removeItem(item);
+        renderCartPage();
+      }
     });
   });
 
   document.querySelectorAll('[data-increase]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = Number(btn.dataset.increase);
-      const item = window.cartModule.readCart().find(i => i.product_id === id);
+    btn.addEventListener('click', async () => {
+      const item = findItem(Number(btn.dataset.increase));
       if (item) {
-        window.cartModule.updateQuantity(id, item.quantity + 1);
+        await window.cartModule.updateQuantity(item, item.quantity + 1);
         renderCartPage();
       }
     });
   });
 
   document.querySelectorAll('[data-decrease]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = Number(btn.dataset.decrease);
-      const item = window.cartModule.readCart().find(i => i.product_id === id);
+    btn.addEventListener('click', async () => {
+      const item = findItem(Number(btn.dataset.decrease));
       if (item) {
-        window.cartModule.updateQuantity(id, item.quantity - 1);
+        await window.cartModule.updateQuantity(item, item.quantity - 1);
         renderCartPage();
       }
     });
   });
 
   document.querySelectorAll('[data-qty-input]').forEach(input => {
-    input.addEventListener('change', () => {
-      const id = Number(input.dataset.qtyInput);
+    input.addEventListener('change', async () => {
+      const item = findItem(Number(input.dataset.qtyInput));
       const value = Math.max(1, Number(input.value) || 1);
-      window.cartModule.updateQuantity(id, value);
-      renderCartPage();
+      if (item) {
+        await window.cartModule.updateQuantity(item, value);
+        renderCartPage();
+      }
     });
   });
 }
 
-function generatePickupCode() {
-  const random = Math.random().toString(36).slice(2, 7).toUpperCase();
-  return `PU-${random}`;
-}
-
-function initFulfillmentToggle() {
+function initCheckoutFieldToggles() {
   const pickupRadio = document.getElementById('fulfillment-pickup');
   const deliveryRadio = document.getElementById('fulfillment-delivery');
+  const mpesaRadio = document.getElementById('payment-mpesa');
+  const cashRadio = document.getElementById('payment-cash');
   const addressField = document.getElementById('shipping-address-field');
   const addressInput = document.getElementById('shipping-address');
+  const phoneField = document.getElementById('mpesa-phone-field');
+  const phoneInput = document.getElementById('mpesa-phone');
+  const cashHint = document.getElementById('cash-payment-hint');
+  const submitBtn = document.getElementById('checkout-submit-btn');
 
   function sync() {
     const isDelivery = deliveryRadio.checked;
+    const isCash = cashRadio.checked;
+
     addressField.classList.toggle('is-hidden', !isDelivery);
     addressInput.required = isDelivery;
     if (!isDelivery) {
       addressField.classList.remove('has-error');
       addressInput.value = '';
     }
+
+    phoneField.classList.toggle('is-hidden', isCash);
+    phoneInput.required = !isCash;
+    if (isCash) {
+      phoneField.classList.remove('has-error');
+    }
+
+    cashHint.textContent = isDelivery
+      ? 'Pay in cash when your order is delivered.'
+      : 'Pay in cash when you collect your order.';
+
+    submitBtn.textContent = isCash ? 'Place order' : 'Send STK push';
   }
 
-  pickupRadio.addEventListener('change', sync);
-  deliveryRadio.addEventListener('change', sync);
+  [pickupRadio, deliveryRadio, mpesaRadio, cashRadio].forEach(radio =>
+    radio.addEventListener('change', sync)
+  );
   sync();
 }
 
-function initCheckoutModal() {
+/** Backend reports which cart items came up short (see the 409
+ *  response from POST /orders/checkout) — reflect that in the cart
+ *  itself instead of just showing an error and leaving it stale. */
+async function reconcileShortages(shortages) {
+  for (const shortage of shortages) {
+    const item = findItem(shortage.product_id);
+    if (!item) continue;
+
+    if (shortage.available === 0) {
+      await window.cartModule.removeItem(item);
+    } else {
+      await window.cartModule.updateQuantity(item, shortage.available);
+    }
+  }
+  await renderCartPage();
+}
+
+async function initCheckoutModal() {
   const overlay = document.getElementById('checkout-modal');
   const openBtn = document.getElementById('checkout-btn');
   const closeBtn = document.getElementById('checkout-modal-close');
@@ -136,9 +189,17 @@ function initCheckoutModal() {
 
   if (!overlay || !openBtn) return;
 
-  initFulfillmentToggle();
+  initCheckoutFieldToggles();
 
-  openBtn.addEventListener('click', () => {
+  openBtn.addEventListener('click', async () => {
+    // Checkout needs a real account — cart_items live server-side
+    // once you're logged in, and that's what checkout reads from.
+    if (!(await window.cartModule.isLoggedInCustomer())) {
+      window.showToast('Please log in to complete your purchase.', 'error');
+      window.location.href = 'login.html?redirect=cart.html';
+      return;
+    }
+
     formStep.classList.remove('is-hidden');
     successStep.classList.add('is-hidden');
     overlay.classList.add('is-open');
@@ -149,65 +210,87 @@ function initCheckoutModal() {
     if (e.target === overlay) overlay.classList.remove('is-open');
   });
 
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!window.validateForm(form)) return;
 
+    const isCash = document.getElementById('payment-cash').checked;
     const phoneInput = document.getElementById('mpesa-phone');
-    const phoneField = phoneInput.closest('.field');
-    const phoneDigits = phoneInput.value.replace(/\s+/g, '');
-    const validPhone = /^(?:\+254|0)7\d{8}$/.test(phoneDigits);
 
-    if (!validPhone) {
-      phoneField.classList.add('has-error');
-      let errorEl = phoneField.querySelector('.field-error');
-      if (!errorEl) {
-        errorEl = document.createElement('span');
-        errorEl.className = 'field-error';
-        phoneField.appendChild(errorEl);
+    // Cash needs no phone number at all — only validate/require it
+    // when M-Pesa is the chosen payment method.
+    if (!isCash) {
+      const phoneField = phoneInput.closest('.field');
+      const phoneDigits = phoneInput.value.replace(/\s+/g, '');
+      const validPhone = /^(?:\+254|0)7\d{8}$/.test(phoneDigits);
+
+      if (!validPhone) {
+        phoneField.classList.add('has-error');
+        let errorEl = phoneField.querySelector('.field-error');
+        if (!errorEl) {
+          errorEl = document.createElement('span');
+          errorEl.className = 'field-error';
+          phoneField.appendChild(errorEl);
+        }
+        errorEl.textContent = 'Enter a valid M-Pesa number, e.g. 0712 345 678.';
+        window.showToast('That phone number doesn\'t look right — please check it.', 'error');
+        phoneInput.focus();
+        return;
       }
-      errorEl.textContent = 'Enter a valid M-Pesa number, e.g. 0712 345 678.';
-      window.showToast('That phone number doesn\'t look right — please check it.', 'error');
-      phoneInput.focus();
-      return;
+      phoneField.classList.remove('has-error');
     }
-    phoneField.classList.remove('has-error');
 
     const isPickup = document.getElementById('fulfillment-pickup').checked;
     const submitBtn = form.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Sending STK push...';
+    submitBtn.textContent = isCash ? 'Placing order...' : 'Sending STK push...';
 
-    // Mock delay — replace with a real POST /api/orders + POST
-    // /api/payments/mpesa/stk-push call. The pickup code/QR below
-    // should come back from that order-creation response instead
-    // of being generated in the browser.
-    setTimeout(() => {
+    const paymentNote = isCash
+      ? (isPickup ? 'Have the exact cash ready when you collect your order.' : 'Have the exact cash ready for our delivery person.')
+      : 'Check your phone and enter your M-Pesa PIN to complete the payment.';
+
+    try {
+      const order = await api.post('/orders/checkout', {
+        payment_method: isCash ? 'cash_on_delivery' : 'mpesa',
+        fulfillment_method: isPickup ? 'pickup' : 'delivery',
+        shipping_address: isPickup ? undefined : document.getElementById('shipping-address').value
+      });
+
       formStep.classList.add('is-hidden');
       successStep.classList.remove('is-hidden');
 
       if (isPickup) {
-        const code = generatePickupCode();
-        document.getElementById('pickup-code').textContent = code;
-        // Demo QR via a public QR image API — swap for a QR image the
-        // backend generates and returns once that endpoint exists.
-        document.getElementById('pickup-qr').src =
-          `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(code)}`;
+        document.getElementById('pickup-payment-note').textContent = paymentNote;
+        document.getElementById('pickup-code').textContent = order.pickup_code;
+        document.getElementById('pickup-qr').src = order.pickup_qr_data_url;
         successPickup.classList.remove('is-hidden');
         successDelivery.classList.add('is-hidden');
-        window.showToast('Order placed — check your phone to complete payment.', 'success');
       } else {
+        document.getElementById('delivery-payment-note').textContent = paymentNote;
         successPickup.classList.add('is-hidden');
         successDelivery.classList.remove('is-hidden');
-        window.showToast('Order placed — we\'ll be in touch about delivery.', 'success');
       }
 
+      window.showToast(
+        isCash ? 'Order placed — pay cash when you get it.' : 'Order placed — check your phone to complete payment.',
+        'success'
+      );
+
       if (window.lucide) lucide.createIcons();
-      localStorage.removeItem('cosmeticshop_cart');
       document.getElementById('cart-badge').textContent = 0;
+      document.getElementById('cart-badge').dataset.count = 0;
+    } catch (err) {
+      if (err.status === 409 && err.data?.shortages) {
+        overlay.classList.remove('is-open');
+        await reconcileShortages(err.data.shortages);
+        window.showToast("Some items in your cart sold out or dropped in stock — we've updated your cart. Please review and try again.", 'error');
+      } else {
+        window.showToast(err.message, 'error');
+      }
+    } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Send STK push';
-    }, 1400);
+      submitBtn.textContent = isCash ? 'Place order' : 'Send STK push';
+    }
   });
 }
 

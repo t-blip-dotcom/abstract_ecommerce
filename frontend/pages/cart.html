@@ -30,7 +30,7 @@
   <header class="header">
     <div class="container">
       <a class="header-logo-container" href="index.html" aria-label="Abstract Cosmetics — go to home">
-        <img class="header-logo" src="/frontend/assets/abstract_logo.png" alt="Abstract Cosmetics logo">
+        <img class="header-logo" src="../assets/abstract_logo.png" alt="Abstract Cosmetics logo">
         <span class="header-greeting">Hello, Customer</span>
       </a>
 
@@ -153,8 +153,7 @@
       <h4>No idea where to find us? We've got you.</h4>
       <p>Watch this quick clip for directions straight to our shop.</p>
       <div class="footer-directions-video">
-        <!-- Replace VIDEO_ID and the handle below with your real TikTok directions video -->
-        <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@abstractcosmetics/video/VIDEO_ID"
+        <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@abstractcosmetics/video/7493061623414836485?_r=1&_t=ZS-9ADWidjK9El"
           data-video-id="VIDEO_ID">
           <section>
             <a target="_blank" rel="noopener" href="https://www.tiktok.com/@abstractcosmetics">@abstractcosmetics on
@@ -178,8 +177,28 @@
       </div>
 
       <div id="checkout-form-step">
-        <form id="checkout-form">
+        <form id="checkout-form" novalidate>
           <div class="field">
+            <label>How will you pay?</label>
+            <div class="fulfillment-options">
+              <label class="fulfillment-option">
+                <input type="radio" name="payment-method" value="mpesa" id="payment-mpesa" checked>
+                <span>
+                  <strong>M-Pesa</strong>
+                  <small>Pay now with an STK push to your phone.</small>
+                </span>
+              </label>
+              <label class="fulfillment-option">
+                <input type="radio" name="payment-method" value="cash" id="payment-cash">
+                <span>
+                  <strong>Cash</strong>
+                  <small id="cash-payment-hint">Pay in cash when you collect your order.</small>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div class="field" id="mpesa-phone-field">
             <label for="mpesa-phone">M-Pesa phone number</label>
             <input type="tel" id="mpesa-phone" placeholder="07XX XXX XXX" required>
           </div>
@@ -210,17 +229,16 @@
             <input type="text" id="shipping-address" placeholder="Street, estate, town">
           </div>
 
-          <button type="submit" class="btn btn--primary btn--full">Send STK push</button>
+          <button type="submit" class="btn btn--primary btn--full" id="checkout-submit-btn">Send STK push</button>
         </form>
       </div>
 
       <div id="checkout-success-step" class="is-hidden">
         <div class="modal-success" id="checkout-success-pickup">
           <i data-lucide="check-circle"></i>
-          <h3>Payment request sent</h3>
-          <p>Check your phone and enter your M-Pesa PIN to complete the payment.</p>
-          <p>Once it's confirmed, bring this pickup code and QR when you collect your order — we'll scan it to pull up
-            your details.</p>
+          <h3>Order placed</h3>
+          <p id="pickup-payment-note">Check your phone and enter your M-Pesa PIN to complete the payment.</p>
+          <p>Bring this pickup code and QR when you collect your order — we'll scan it to pull up your details.</p>
           <p class="pickup-code" id="pickup-code"></p>
           <img class="pickup-qr" id="pickup-qr" src="" alt="Pickup QR code">
           <a href="index.html" class="btn btn--primary btn--full">Go back to home</a>
@@ -228,8 +246,8 @@
 
         <div class="modal-success is-hidden" id="checkout-success-delivery">
           <i data-lucide="check-circle"></i>
-          <h3>Payment request sent</h3>
-          <p>Check your phone and enter your M-Pesa PIN to complete the payment.</p>
+          <h3>Order placed</h3>
+          <p id="delivery-payment-note">Check your phone and enter your M-Pesa PIN to complete the payment.</p>
           <p>We'll contact you shortly to arrange transport and agree on the delivery cost, since that depends on the
             size of your order and the distance.</p>
           <a href="index.html" class="btn btn--primary btn--full">Go back to home</a>

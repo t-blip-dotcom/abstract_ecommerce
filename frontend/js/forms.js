@@ -75,6 +75,24 @@ document.addEventListener('input', (e) => {
 window.validateForm = validateForm;
 
 /**
+ * When the backend rejects a submit with field-level errors (see
+ * ApiError.fieldErrors in api.js), this puts each message under the
+ * matching input the same way client-side validation does — so a
+ * server-side rule (e.g. "username already taken") looks identical
+ * to a client-side one.
+ */
+function applyServerFieldErrors(form, fieldErrors) {
+  if (!form || !fieldErrors) return;
+  Object.entries(fieldErrors).forEach(([fieldName, message]) => {
+    const input = form.querySelector(`[name="${fieldName}"], #${fieldName}`);
+    const field = input?.closest('.field');
+    if (field) setFieldError(field, message);
+  });
+}
+
+window.applyServerFieldErrors = applyServerFieldErrors;
+
+/**
  * Unsaved-changes protection for admin modals. Call initDirtyTracking(form)
  * once when the page loads, markFormClean(form) whenever the form is
  * freshly opened or successfully saved, and route every close/cancel/
@@ -93,11 +111,60 @@ function markFormClean(form) {
 }
 
 function confirmDiscard(form, onConfirmedClose) {
-  if (form && form.dataset.dirty === 'true') {
-    const leave = window.confirm('You have unsaved changes. Leave without saving?');
-    if (!leave) return;
+  if (!form || form.dataset.dirty !== 'true') {
+    onConfirmedClose();
+    return;
   }
-  onConfirmedClose();
+  showConfirmDialog({
+    message: 'You have unsaved changes. Leave without saving?',
+    confirmLabel: 'Leave without saving',
+    cancelLabel: 'Keep editing'
+  }).then((confirmed) => {
+    if (confirmed) onConfirmedClose();
+  });
+}
+
+/**
+ * A small in-page confirm dialog, built the first time it's needed
+ * and reused after that — styled like the rest of the site instead
+ * of the browser's native confirm() popup. Returns a promise that
+ * resolves true/false depending on which button was clicked.
+ */
+function showConfirmDialog({ message, confirmLabel = 'Confirm', cancelLabel = 'Cancel' }) {
+  return new Promise((resolve) => {
+    let overlay = document.getElementById('confirm-dialog');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'confirm-dialog';
+      overlay.className = 'modal-overlay';
+      overlay.innerHTML = `
+        <div class="modal">
+          <p class="confirm-dialog-message" id="confirm-dialog-message"></p>
+          <div class="confirm-dialog-actions">
+            <button type="button" class="btn btn--outline" id="confirm-dialog-cancel"></button>
+            <button type="button" class="btn btn--primary" id="confirm-dialog-confirm"></button>
+          </div>
+        </div>`;
+      document.body.appendChild(overlay);
+    }
+
+    overlay.querySelector('#confirm-dialog-message').textContent = message;
+    const cancelBtn = overlay.querySelector('#confirm-dialog-cancel');
+    const confirmBtn = overlay.querySelector('#confirm-dialog-confirm');
+    cancelBtn.textContent = cancelLabel;
+    confirmBtn.textContent = confirmLabel;
+
+    function finish(result) {
+      overlay.classList.remove('is-open');
+      cancelBtn.onclick = null;
+      confirmBtn.onclick = null;
+      resolve(result);
+    }
+
+    cancelBtn.onclick = () => finish(false);
+    confirmBtn.onclick = () => finish(true);
+    overlay.classList.add('is-open');
+  });
 }
 
 window.initDirtyTracking = initDirtyTracking;

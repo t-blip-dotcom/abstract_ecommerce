@@ -1,53 +1,73 @@
 /**
  * admin-products.js
- * Product management for admin & manager (full manage rights) and
- * staff (view only — add/edit/delete controls are hidden for them).
- * Fields mirror the products/category/brand/supplier/product_status
- * tables. All data is mocked in-memory; once the backend exists:
- *   - GET    /api/admin/products
- *   - POST   /api/admin/products         (multipart, for the photo)
- *   - PATCH  /api/admin/products/:id
- *   - DELETE /api/admin/products/:id
+ * The most involved admin page to wire up, for two reasons:
+ *  1. Category/brand/supplier are foreign keys in the database, so
+ *     the dropdowns have to be populated from real IDs (GET
+ *     /api/categories, /api/brands, /api/suppliers) instead of the
+ *     hardcoded name lists the mock version used.
+ *  2. The photo goes through FormData, same as admin-brands.js.
+ * Filters are sent to the backend as category_id/brand_id/status/
+ * search query params — GET /api/products does the actual filtering
+ * (and the popularity ranking), this file just displays what comes back.
  */
 
-const CATEGORIES = ['Hair Care', 'Skin Care', 'Body Care', 'Hair Oils', 'Lotions', 'Leave-In'];
-const BRANDS = ['Cantu', 'Palmers', 'Nivea', 'Vaseline', 'Simple'];
-const SUPPLIERS = ['Nairobi Beauty Distributors', 'Coastal Cosmetics Ltd', 'Highlands Supply Co.'];
 const PRODUCT_STATUSES = ['active', 'inactive', 'out_of_stock'];
 
-let adminProducts = [
-  { product_id: 1, name: 'Mega Growth Leave-In', category: 'Hair Care', brand: 'Cantu', supplier: 'Nairobi Beauty Distributors', price: 850, stock_quantity: 24, status: 'active', photo_url: '' },
-  { product_id: 2, name: 'Coconut Hair Oil', category: 'Hair Oils', brand: 'Palmers', supplier: 'Coastal Cosmetics Ltd', price: 620, stock_quantity: 3, status: 'active', photo_url: '' },
-  { product_id: 6, name: 'Shea Butter Lotion', category: 'Lotions', brand: 'Nivea', supplier: 'Highlands Supply Co.', price: 700, stock_quantity: 0, status: 'out_of_stock', photo_url: '' },
-  { product_id: 9, name: 'Curl Defining Cream', category: 'Hair Care', brand: 'Cantu', supplier: 'Nairobi Beauty Distributors', price: 920, stock_quantity: 15, status: 'active', photo_url: '' }
-];
-
-const filterState = { category: 'all', brand: 'all', status: 'all', search: '' };
+let categories = [];
+let brands = [];
+let suppliers = [];
+let currentProducts = [];
 let editingProductId = null;
+
+const filterState = { category_id: '', brand_id: '', status: '', search: '' };
 
 function placeholderPhoto(name) {
   return `https://placehold.co/64x64/E1F1FB/0074BD?text=${encodeURIComponent((name || 'P').charAt(0))}`;
 }
 
-function filteredProducts() {
-  return adminProducts.filter(p => {
-    const matchesCategory = filterState.category === 'all' || p.category === filterState.category;
-    const matchesBrand = filterState.brand === 'all' || p.brand === filterState.brand;
-    const matchesStatus = filterState.status === 'all' || p.status === filterState.status;
-    const matchesSearch = !filterState.search || p.name.toLowerCase().includes(filterState.search);
-    return matchesCategory && matchesBrand && matchesStatus && matchesSearch;
-  });
+async function loadLookups() {
+  [categories, brands, suppliers] = await Promise.all([
+    api.get('/categories'),
+    api.get('/brands'),
+    api.get('/suppliers').catch(() => []) // suppliers list is manage-only; staff just won't see it, which is fine since they can't add/edit anyway
+  ]);
+}
+
+function populateSelect(selectEl, options, valueKey, labelKey, selectedValue, placeholder) {
+  const optionTags = options.map(opt =>
+    `<option value="${opt[valueKey]}" ${String(opt[valueKey]) === String(selectedValue) ? 'selected' : ''}>${opt[labelKey]}</option>`
+  ).join('');
+  selectEl.innerHTML = placeholder ? `<option value="">${placeholder}</option>${optionTags}` : optionTags;
+}
+
+function populateFilterOptions() {
+  populateSelect(document.getElementById('filter-category'), categories, 'category_id', 'category_name', '', 'All categories');
+  populateSelect(document.getElementById('filter-brand'), brands, 'brand_id', 'brand_name', '', 'All brands');
+
+  const statusSelect = document.getElementById('filter-status');
+  statusSelect.innerHTML = '<option value="">All statuses</option>' +
+    PRODUCT_STATUSES.map(s => `<option value="${s}">${s.replace('_', ' ')}</option>`).join('');
+}
+
+function buildQuery() {
+  const params = new URLSearchParams();
+  if (filterState.category_id) params.set('category_id', filterState.category_id);
+  if (filterState.brand_id) params.set('brand_id', filterState.brand_id);
+  if (filterState.status) params.set('status', filterState.status);
+  if (filterState.search) params.set('search', filterState.search);
+  params.set('per_page', 60); // admin view — show more per page than the storefront grid
+  return params.toString();
 }
 
 function productRowTemplate(p, canManageProducts) {
   return `
-    <tr data-product-row="${p.product_id}">
-      <td><img class="admin-table-thumb" src="${p.photo_url || placeholderPhoto(p.name)}" alt=""></td>
+    <tr>
+      <td><img class="admin-table-thumb" src="${api.assetUrl(p.photo_url) || placeholderPhoto(p.name)}" alt=""></td>
       <td>${p.name}</td>
-      <td>${p.category}</td>
-      <td>${p.brand}</td>
-      <td>${p.supplier}</td>
-      <td>KSh ${p.price.toLocaleString('en-KE')}</td>
+      <td>${p.category_name}</td>
+      <td>${p.brand_name}</td>
+      <td>${p.supplier_name}</td>
+      <td>KSh ${Number(p.price).toLocaleString('en-KE')}</td>
       <td>${p.stock_quantity}</td>
       <td><span class="status-badge status-badge--${p.status}">${p.status.replace('_', ' ')}</span></td>
       ${canManageProducts ? `
@@ -60,112 +80,120 @@ function productRowTemplate(p, canManageProducts) {
     </tr>`;
 }
 
+async function loadProducts() {
+  try {
+    const result = await api.get(`/products?${buildQuery()}`);
+    currentProducts = result.products;
+  } catch (err) {
+    window.showToast(err.message, 'error');
+    currentProducts = [];
+  }
+  renderAdminProducts();
+}
+
 function renderAdminProducts() {
   const tbody = document.getElementById('admin-products-body');
   if (!tbody) return;
 
   const canManageProducts = window.adminShared.canManage('products');
-  const rows = filteredProducts();
+  const hasActiveFilters = Object.values(filterState).some(v => v !== '');
+  const emptyMessage = hasActiveFilters
+    ? '<h3>No products match those filters</h3><p>Try clearing them to see everything.</p>'
+    : `<h3>No products yet</h3><p>${canManageProducts ? "Click \"Add product\" above to create your first one." : 'Nothing has been added to the catalog yet.'}</p>`;
 
-  tbody.innerHTML = rows.length
-    ? rows.map(p => productRowTemplate(p, canManageProducts)).join('')
-    : `<tr><td colspan="9"><div class="empty-state"><i data-lucide="search-x"></i><h3>No products match those filters</h3></div></td></tr>`;
+  tbody.innerHTML = currentProducts.length
+    ? currentProducts.map(p => productRowTemplate(p, canManageProducts)).join('')
+    : `<tr><td colspan="9"><div class="empty-state"><i data-lucide="search-x"></i>${emptyMessage}</div></td></tr>`;
 
   if (window.lucide) lucide.createIcons();
+  if (!canManageProducts) return;
 
-  if (canManageProducts) {
-    tbody.querySelectorAll('[data-delete-product]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const product = adminProducts.find(p => p.product_id === Number(btn.dataset.deleteProduct));
-        adminProducts = adminProducts.filter(p => p.product_id !== Number(btn.dataset.deleteProduct));
-        renderAdminProducts();
+  tbody.querySelectorAll('[data-delete-product]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.deleteProduct;
+      const product = currentProducts.find(p => String(p.product_id) === id);
+      try {
+        await api.delete(`/products/${id}`);
         window.showToast(`${product?.name || 'Product'} removed`, 'success');
-      });
+        loadProducts();
+      } catch (err) {
+        window.showToast(err.message, 'error');
+      }
     });
+  });
 
-    tbody.querySelectorAll('[data-edit-product]').forEach(btn => {
-      btn.addEventListener('click', () => openProductModal(Number(btn.dataset.editProduct)));
-    });
-  }
-}
-
-function populateSelect(selectEl, options, selectedValue) {
-  selectEl.innerHTML = options.map(opt =>
-    `<option value="${opt}" ${opt === selectedValue ? 'selected' : ''}>${opt}</option>`
-  ).join('');
-}
-
-function populateFilterOptions() {
-  const categorySelect = document.getElementById('filter-category');
-  const brandSelect = document.getElementById('filter-brand');
-  const statusSelect = document.getElementById('filter-status');
-
-  categorySelect.innerHTML = '<option value="all">All categories</option>' +
-    CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
-  brandSelect.innerHTML = '<option value="all">All brands</option>' +
-    BRANDS.map(b => `<option value="${b}">${b}</option>`).join('');
-  statusSelect.innerHTML = '<option value="all">All statuses</option>' +
-    PRODUCT_STATUSES.map(s => `<option value="${s}">${s.replace('_', ' ')}</option>`).join('');
+  tbody.querySelectorAll('[data-edit-product]').forEach(btn => {
+    btn.addEventListener('click', () => openProductModal(btn.dataset.editProduct));
+  });
 }
 
 function initFilters() {
   document.getElementById('filter-category').addEventListener('change', (e) => {
-    filterState.category = e.target.value;
-    renderAdminProducts();
+    filterState.category_id = e.target.value;
+    loadProducts();
   });
   document.getElementById('filter-brand').addEventListener('change', (e) => {
-    filterState.brand = e.target.value;
-    renderAdminProducts();
+    filterState.brand_id = e.target.value;
+    loadProducts();
   });
   document.getElementById('filter-status').addEventListener('change', (e) => {
     filterState.status = e.target.value;
-    renderAdminProducts();
+    loadProducts();
   });
+
+  let debounceTimer;
   document.getElementById('filter-search').addEventListener('input', (e) => {
-    filterState.search = e.target.value.trim().toLowerCase();
-    renderAdminProducts();
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      filterState.search = e.target.value.trim();
+      loadProducts();
+    }, 300);
   });
+
   document.getElementById('filter-clear').addEventListener('click', () => {
-    filterState.category = 'all';
-    filterState.brand = 'all';
-    filterState.status = 'all';
+    filterState.category_id = '';
+    filterState.brand_id = '';
+    filterState.status = '';
     filterState.search = '';
-    document.getElementById('filter-category').value = 'all';
-    document.getElementById('filter-brand').value = 'all';
-    document.getElementById('filter-status').value = 'all';
+    document.getElementById('filter-category').value = '';
+    document.getElementById('filter-brand').value = '';
+    document.getElementById('filter-status').value = '';
     document.getElementById('filter-search').value = '';
-    renderAdminProducts();
+    loadProducts();
   });
 }
 
 function openProductModal(productId) {
   const overlay = document.getElementById('product-modal');
   const form = document.getElementById('product-form');
-  const title = document.getElementById('product-modal-title');
   const preview = document.getElementById('product-photo-preview');
   form.reset();
   preview.src = placeholderPhoto('');
 
   editingProductId = productId || null;
-  const product = editingProductId ? adminProducts.find(p => p.product_id === editingProductId) : null;
+  const product = editingProductId ? currentProducts.find(p => String(p.product_id) === editingProductId) : null;
 
-  title.textContent = product ? 'Edit product' : 'Add product';
+  document.getElementById('product-modal-title').textContent = product ? 'Edit product' : 'Add product';
   document.getElementById('product-form-submit').textContent = product ? 'Save changes' : 'Save product';
 
-  populateSelect(document.getElementById('product-category'), CATEGORIES, product?.category);
-  populateSelect(document.getElementById('product-brand'), BRANDS, product?.brand);
-  populateSelect(document.getElementById('product-supplier'), SUPPLIERS, product?.supplier);
-  populateSelect(document.getElementById('product-status'), PRODUCT_STATUSES, product?.status || 'active');
+  populateSelect(document.getElementById('product-category'), categories, 'category_id', 'category_name', product?.category_id);
+  populateSelect(document.getElementById('product-brand'), brands, 'brand_id', 'brand_name', product?.brand_id);
+  populateSelect(document.getElementById('product-supplier'), suppliers, 'supplier_id', 'supplier_name', product?.supplier_id);
+
+  const statusSelect = document.getElementById('product-status');
+  statusSelect.innerHTML = PRODUCT_STATUSES.map(s =>
+    `<option value="${s}" ${s === (product?.status || 'active') ? 'selected' : ''}>${s.replace('_', ' ')}</option>`
+  ).join('');
 
   if (product) {
     document.getElementById('product-name').value = product.name;
     document.getElementById('product-price').value = product.price;
     document.getElementById('product-stock').value = product.stock_quantity;
-    preview.src = product.photo_url || placeholderPhoto(product.name);
+    preview.src = api.assetUrl(product.photo_url) || placeholderPhoto(product.name);
   }
 
-  overlay.classList.add('is-open');
   window.markFormClean(form);
+  overlay.classList.add('is-open');
 }
 
 function closeProductModal() {
@@ -181,13 +209,12 @@ function initProductModal() {
   const photoInput = document.getElementById('product-photo');
   const preview = document.getElementById('product-photo-preview');
 
+  window.initDirtyTracking(form);
   openBtn?.addEventListener('click', () => openProductModal(null));
   closeBtn.addEventListener('click', () => window.confirmDiscard(form, closeProductModal));
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) window.confirmDiscard(form, closeProductModal);
   });
-
-  window.initDirtyTracking(form);
 
   photoInput.addEventListener('change', () => {
     const file = photoInput.files[0];
@@ -197,52 +224,63 @@ function initProductModal() {
     reader.readAsDataURL(file);
   });
 
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!window.validateForm(form)) return;
 
-    const values = {
-      name: document.getElementById('product-name').value,
-      category: document.getElementById('product-category').value,
-      brand: document.getElementById('product-brand').value,
-      supplier: document.getElementById('product-supplier').value,
-      price: Number(document.getElementById('product-price').value),
-      stock_quantity: Number(document.getElementById('product-stock').value),
-      status: document.getElementById('product-status').value,
-      photo_url: preview.src.startsWith('data:') ? preview.src : ''
-    };
+    const formData = new FormData();
+    formData.append('name', document.getElementById('product-name').value);
+    formData.append('category_id', document.getElementById('product-category').value);
+    formData.append('brand_id', document.getElementById('product-brand').value);
+    formData.append('supplier_id', document.getElementById('product-supplier').value);
+    formData.append('price', document.getElementById('product-price').value);
+    formData.append('stock_quantity', document.getElementById('product-stock').value);
+    formData.append('status', document.getElementById('product-status').value);
+    if (photoInput.files[0]) formData.append('photo', photoInput.files[0]);
 
-    if (editingProductId) {
-      const product = adminProducts.find(p => p.product_id === editingProductId);
-      Object.assign(product, values);
-      window.showToast('Product updated', 'success');
-    } else {
-      adminProducts.unshift({ product_id: Date.now(), ...values });
-      window.showToast('Product added', 'success');
+    const submitBtn = document.getElementById('product-form-submit');
+    submitBtn.disabled = true;
+
+    try {
+      if (editingProductId) {
+        await api.patchForm(`/products/${editingProductId}`, formData);
+        window.showToast('Product updated', 'success');
+      } else {
+        await api.postForm('/products', formData);
+        window.showToast('Product added', 'success');
+      }
+      window.markFormClean(form);
+      closeProductModal();
+      loadProducts();
+    } catch (err) {
+      window.applyServerFieldErrors(form, err.fieldErrors);
+      window.showToast(err.message, 'error');
+    } finally {
+      submitBtn.disabled = false;
     }
-
-    renderAdminProducts();
-    window.markFormClean(form);
-    closeProductModal();
   });
 }
 
 function applyViewOnlyMode() {
   if (window.adminShared.canManage('products')) return;
-
   document.getElementById('add-product-btn')?.remove();
   document.getElementById('products-actions-col')?.remove();
-  const banner = document.getElementById('products-view-only-banner');
-  if (banner) banner.classList.remove('is-hidden');
+  document.getElementById('products-view-only-banner')?.classList.remove('is-hidden');
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  if (!window.adminShared.requirePageAccess('products')) return;
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!(await window.adminShared.requirePageAccess('products'))) return;
   window.adminShared.renderAdminNav('products');
+
+  try {
+    await loadLookups();
+  } catch (err) {
+    window.showToast(err.message, 'error');
+  }
 
   populateFilterOptions();
   initFilters();
   applyViewOnlyMode();
   initProductModal();
-  renderAdminProducts();
+  loadProducts();
 });

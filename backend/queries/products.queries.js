@@ -42,9 +42,14 @@ const BASE_SELECT = `
  * that's what makes this immune to SQL injection regardless of
  * what a shopper types into search or filter fields.
  */
-function buildFilters({ category_id, brand_id, status, search }) {
+function buildFilters({ category_id, brand_id, status, search, includeInactive }) {
   const clauses = [];
   const params = [];
+
+  // Shoppers never see inactive products; staff pass includeInactive: true.
+  if (!includeInactive) {
+    clauses.push("ps.product_status_name <> 'inactive'");
+  }
 
   if (category_id) {
     params.push(category_id);
@@ -69,8 +74,8 @@ function buildFilters({ category_id, brand_id, status, search }) {
   };
 }
 
-async function listProducts({ category_id, brand_id, status, search, page = 1, perPage = 12, sort = 'popularity' }) {
-  const { whereSql, params } = buildFilters({ category_id, brand_id, status, search });
+async function listProducts({ category_id, brand_id, status, search, page = 1, perPage = 12, sort = 'popularity', includeInactive = false }) {
+  const { whereSql, params } = buildFilters({ category_id, brand_id, status, search, includeInactive });
 
   const orderSql = sort === 'price_asc' ? 'p.price ASC'
     : sort === 'price_desc' ? 'p.price DESC'

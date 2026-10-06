@@ -28,7 +28,7 @@ function openQuantitySheet(product) {
   sheetProduct = product;
 
   document.getElementById('sheet-product-image').src =
-    product.photo_url || `https://placehold.co/160x160/E1F1FB/0074BD?text=${encodeURIComponent(product.name)}`;
+    api.assetUrl(product.photo_url) || `https://placehold.co/160x160/E1F1FB/0074BD?text=${encodeURIComponent(product.name)}`;
   document.getElementById('sheet-product-name').textContent = product.name;
   document.getElementById('sheet-product-price').textContent =
     window.productsModule ? window.productsModule.formatPrice(product.price) : `KSh ${product.price}`;
@@ -76,11 +76,18 @@ function initQuantitySheet() {
     qtyInput.value = clampSheetQty(qtyInput.value);
   });
 
-  addBtn.addEventListener('click', () => {
+  addBtn.addEventListener('click', async () => {
     if (!sheetProduct) return;
-    window.cartModule.addItem(sheetProduct, clampSheetQty(qtyInput.value));
-    window.showToast(`Added ${sheetProduct.name} to cart`, 'success');
-    closeQuantitySheet();
+    addBtn.disabled = true;
+    try {
+      await window.cartModule.addItem(sheetProduct, clampSheetQty(qtyInput.value));
+      window.showToast(`Added ${sheetProduct.name} to cart`, 'success');
+      closeQuantitySheet();
+    } catch (err) {
+      window.showToast(err.message, 'error');
+    } finally {
+      addBtn.disabled = false;
+    }
   });
 }
 

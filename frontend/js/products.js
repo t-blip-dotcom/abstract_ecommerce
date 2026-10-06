@@ -10,24 +10,6 @@
 
 const DEFAULT_PRODUCTS_PER_PAGE = 8;
 
-// Shaped like the `products` table joined with `category` and a future
-// `brand` table. Swap `loadProducts()` for `api.get('/products')` once
-// the backend endpoint exists.
-const MOCK_PRODUCTS = [
-  { product_id: 1, name: 'Mega Growth Leave-In', category: 'Hair Care', brand: 'Cantu', price: 850, stock_quantity: 24, photo_url: null },
-  { product_id: 2, name: 'Coconut Hair Oil', category: 'Hair Oils', brand: 'Palmers', price: 620, stock_quantity: 3, photo_url: null },
-  { product_id: 3, name: 'Nourishing Body Lotion', category: 'Body Care', brand: 'Nivea', price: 990, stock_quantity: 40, photo_url: null },
-  { product_id: 4, name: 'Moisturizing Cream', category: 'Skin Care', brand: 'Vaseline', price: 450, stock_quantity: 18, photo_url: null },
-  { product_id: 5, name: 'Argan Oil Leave-In Spray', category: 'Leave-In', brand: 'Cantu', price: 780, stock_quantity: 12, photo_url: null },
-  { product_id: 6, name: 'Shea Butter Lotion', category: 'Lotions', brand: 'Nivea', price: 700, stock_quantity: 0, photo_url: null },
-  { product_id: 7, name: 'Rosewater Facial Toner', category: 'Skin Care', brand: 'Simple', price: 550, stock_quantity: 27, photo_url: null },
-  { product_id: 8, name: 'Castor Oil Blend', category: 'Hair Oils', brand: 'Palmers', price: 640, stock_quantity: 9, photo_url: null },
-  { product_id: 9, name: 'Curl Defining Cream', category: 'Hair Care', brand: 'Cantu', price: 920, stock_quantity: 15, photo_url: null },
-  { product_id: 10, name: 'Cocoa Butter Body Cream', category: 'Body Care', brand: 'Palmers', price: 810, stock_quantity: 22, photo_url: null },
-  { product_id: 11, name: 'Aloe Vera Gel Moisturizer', category: 'Skin Care', brand: 'Simple', price: 480, stock_quantity: 30, photo_url: null },
-  { product_id: 12, name: 'Deep Conditioning Mask', category: 'Hair Care', brand: 'Cantu', price: 1050, stock_quantity: 6, photo_url: null }
-];
-
 const state = {
   all: [],
   filtered: [],
@@ -42,11 +24,30 @@ function formatPrice(amount) {
   return `KSh ${Number(amount).toLocaleString('en-KE')}`;
 }
 
+/**
+ * Fetches the whole active catalog once (the backend already ranks
+ * it by popularity by default) and maps its field names to the
+ * shape the rest of this file expects. Filtering by category/brand
+ * still happens client-side below, against this full list — that's
+ * what makes it filter the WHOLE catalog rather than just the
+ * current page.
+ */
 async function loadProducts() {
-  if (api.useMockData) {
-    return Promise.resolve(MOCK_PRODUCTS);
+  try {
+    const { products } = await api.get('/products?per_page=500');
+    return products.map(p => ({
+      product_id: p.product_id,
+      name: p.name,
+      category: p.category_name,
+      brand: p.brand_name,
+      price: Number(p.price),
+      stock_quantity: p.stock_quantity,
+      photo_url: p.photo_url
+    }));
+  } catch (err) {
+    window.showToast?.(err.message, 'error');
+    return [];
   }
-  return api.get('/products');
 }
 
 function productCardTemplate(product) {
@@ -59,7 +60,7 @@ function productCardTemplate(product) {
         ${outOfStock ? '<span class="product-card-stock-flag">Out of stock</span>' : ''}
         ${!outOfStock && lowStock ? '<span class="product-card-stock-flag">Low stock</span>' : ''}
         <a href="product-detail.html?id=${product.product_id}">
-          <img src="${product.photo_url || `https://placehold.co/400x400/E1F1FB/0074BD?text=${encodeURIComponent(product.name)}`}" alt="${product.name}" loading="lazy">
+          <img src="${api.assetUrl(product.photo_url) || `https://placehold.co/400x400/E1F1FB/0074BD?text=${encodeURIComponent(product.name)}`}" alt="${product.name}" loading="lazy">
         </a>
       </div>
       <div class="product-card-body">
@@ -85,12 +86,18 @@ function renderGrid() {
   const pageItems = state.filtered.slice(start, start + state.perPage);
 
   if (pageItems.length === 0) {
-    grid.innerHTML = `
-      <div class="empty-state product-grid-empty-state">
-        <i data-lucide="search-x"></i>
-        <h3>No products match that search</h3>
-        <p>Try a different category or search term.</p>
-      </div>`;
+    const hasActiveFilters = state.category !== 'all' || state.brands.length > 0 || state.searchTerm !== '';
+    grid.innerHTML = hasActiveFilters
+      ? `<div class="empty-state product-grid-empty-state">
+          <i data-lucide="search-x"></i>
+          <h3>No products match that search</h3>
+          <p>Try a different category or search term.</p>
+        </div>`
+      : `<div class="empty-state product-grid-empty-state">
+          <i data-lucide="package"></i>
+          <h3>No products yet</h3>
+          <p>Check back soon — we're still adding things.</p>
+        </div>`;
   } else {
     grid.innerHTML = pageItems.map(productCardTemplate).join('');
   }
@@ -148,7 +155,7 @@ function applyFilters() {
 
 function attachAddToCartHandlers() {
   document.querySelectorAll('[data-add-to-cart]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
+    btn.addEventListener('click', async (e) => {
       e.preventDefault();
       if (btn.disabled) return;
 
@@ -166,7 +173,7 @@ function attachAddToCartHandlers() {
         window.quantitySheet.open(product);
       } else if (window.cartModule) {
         // Fallback if the sheet markup isn't on this page.
-        window.cartModule.addItem(product, 1);
+        await window.cartModule.addItem(product, 1);
         window.showToast(`Added ${product.name} to cart`, 'success');
       }
     });

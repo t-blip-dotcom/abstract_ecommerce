@@ -42,7 +42,6 @@ backend/
     errorHandler.js            central error handling + async wrapper
   config/
     jwt.js                sign/set/clear the auth cookie consistently
-    rateLimiters.js        brute-force protection for login, general API throttling
   uploads/                product/brand photos land here, served at /uploads/...
 ```
 
@@ -60,8 +59,8 @@ that split is what makes each side easy to read and test on its own.
   `secure` in production, HTTPS-only) — unreadable by page
   JavaScript, which blocks the most common way a stolen token leaks
   (XSS reading `localStorage`).
-- **Brute-force protection**: `authLimiter` caps login/signup
-  attempts per IP; `apiLimiter` caps general API use.
+- **Rate limiting**: currently disabled. Re-enable request throttling
+  before exposing this API to the public internet.
 - **Role enforcement**: happens server-side in
   `requireRole.middleware.js` on every protected route — the
   frontend's nav hiding is just convenience, not the real gate.

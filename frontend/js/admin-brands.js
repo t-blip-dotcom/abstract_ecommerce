@@ -1,19 +1,12 @@
 /**
  * admin-brands.js
- * Brand management — admin & manager only, per the role spec.
- * Fields mirror the BRAND table: brand_name, description, logo_url.
- * Once the backend exists:
- *   - GET/POST/PATCH/DELETE /api/admin/brands
+ * Same pattern as admin-categories.js, except the logo upload needs
+ * FormData instead of JSON — api.postForm/patchForm (see api.js)
+ * send the raw <input type="file"> the way the backend's multer
+ * middleware expects.
  */
 
-let adminBrands = [
-  { brand_id: 1, brand_name: 'Cantu', description: 'Curl and coily hair care', logo_url: '' },
-  { brand_id: 2, brand_name: 'Palmers', description: 'Cocoa and shea butter skin care', logo_url: '' },
-  { brand_id: 3, brand_name: 'Nivea', description: 'Everyday skin and body care', logo_url: '' },
-  { brand_id: 4, brand_name: 'Vaseline', description: 'Petroleum jelly and lotions', logo_url: '' },
-  { brand_id: 5, brand_name: 'Simple', description: 'Gentle, fragrance-free skin care', logo_url: '' }
-];
-
+let adminBrands = [];
 let editingBrandId = null;
 
 function brandRowTemplate(b) {
@@ -35,19 +28,36 @@ function placeholderLogo(name) {
   return `https://placehold.co/64x64/E1F1FB/0074BD?text=${encodeURIComponent((name || 'B').charAt(0))}`;
 }
 
+async function loadBrands() {
+  try {
+    adminBrands = await api.get('/brands');
+  } catch (err) {
+    window.showToast(err.message, 'error');
+    adminBrands = [];
+  }
+  renderAdminBrands();
+}
+
 function renderAdminBrands() {
   const tbody = document.getElementById('admin-brands-body');
   if (!tbody) return;
 
-  tbody.innerHTML = adminBrands.map(brandRowTemplate).join('');
+  tbody.innerHTML = adminBrands.length
+    ? adminBrands.map(brandRowTemplate).join('')
+    : `<tr><td colspan="4"><div class="empty-state"><i data-lucide="tag"></i><h3>No brands yet</h3></div></td></tr>`;
   if (window.lucide) lucide.createIcons();
 
   tbody.querySelectorAll('[data-delete-brand]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const brand = adminBrands.find(b => b.brand_id === Number(btn.dataset.deleteBrand));
-      adminBrands = adminBrands.filter(b => b.brand_id !== Number(btn.dataset.deleteBrand));
-      renderAdminBrands();
-      window.showToast(`${brand?.brand_name || 'Brand'} removed`, 'success');
+    btn.addEventListener('click', async () => {
+      const id = Number(btn.dataset.deleteBrand);
+      const brand = adminBrands.find(b => b.brand_id === id);
+      try {
+        await api.delete(`/brands/${id}`);
+        window.showToast(`${brand?.brand_name || 'Brand'} removed`, 'success');
+        loadBrands();
+      } catch (err) {
+        window.showToast(err.message, 'error');
+      }
     });
   });
 
@@ -67,7 +77,6 @@ function openBrandModal(brandId) {
 
   document.getElementById('brand-modal-title').textContent = brand ? 'Edit brand' : 'Add brand';
   document.getElementById('brand-form-submit').textContent = brand ? 'Save changes' : 'Save brand';
-
   preview.src = brand?.logo_url || placeholderLogo(brand?.brand_name);
 
   if (brand) {
@@ -75,7 +84,7 @@ function openBrandModal(brandId) {
     document.getElementById('brand-description').value = brand.description || '';
   }
 
-  markFormClean(form);
+  window.markFormClean(form);
   overlay.classList.add('is-open');
 }
 
@@ -92,9 +101,9 @@ function initBrandModal() {
 
   window.initDirtyTracking(form);
   document.getElementById('add-brand-btn').addEventListener('click', () => openBrandModal(null));
-  document.getElementById('brand-modal-close').addEventListener('click', () => confirmDiscard(form, closeBrandModal));
+  document.getElementById('brand-modal-close').addEventListener('click', () => window.confirmDiscard(form, closeBrandModal));
   overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) confirmDiscard(form, closeBrandModal);
+    if (e.target === overlay) window.confirmDiscard(form, closeBrandModal);
   });
 
   logoInput.addEventListener('change', () => {
@@ -105,33 +114,43 @@ function initBrandModal() {
     reader.readAsDataURL(file);
   });
 
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!window.validateForm(form)) return;
 
-    const values = {
-      brand_name: document.getElementById('brand-name').value,
-      description: document.getElementById('brand-description').value,
-      logo_url: preview.src.startsWith('data:') ? preview.src : ''
-    };
+    // FormData instead of a plain object — this is what lets the
+    // logo file ride along with the text fields in one request.
+    const formData = new FormData();
+    formData.append('brand_name', document.getElementById('brand-name').value);
+    formData.append('description', document.getElementById('brand-description').value);
+    if (logoInput.files[0]) formData.append('logo', logoInput.files[0]);
 
-    if (editingBrandId) {
-      Object.assign(adminBrands.find(b => b.brand_id === editingBrandId), values);
-      window.showToast('Brand updated', 'success');
-    } else {
-      adminBrands.unshift({ brand_id: Date.now(), ...values });
-      window.showToast('Brand added', 'success');
+    const submitBtn = document.getElementById('brand-form-submit');
+    submitBtn.disabled = true;
+
+    try {
+      if (editingBrandId) {
+        await api.patchForm(`/brands/${editingBrandId}`, formData);
+        window.showToast('Brand updated', 'success');
+      } else {
+        await api.postForm('/brands', formData);
+        window.showToast('Brand added', 'success');
+      }
+      window.markFormClean(form);
+      closeBrandModal();
+      loadBrands();
+    } catch (err) {
+      window.applyServerFieldErrors(form, err.fieldErrors);
+      window.showToast(err.message, 'error');
+    } finally {
+      submitBtn.disabled = false;
     }
-
-    renderAdminBrands();
-    markFormClean(form);
-    closeBrandModal();
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  if (!window.adminShared.requirePageAccess('brands')) return;
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!(await window.adminShared.requirePageAccess('brands'))) return;
   window.adminShared.renderAdminNav('brands');
   initBrandModal();
-  renderAdminBrands();
+  loadBrands();
 });

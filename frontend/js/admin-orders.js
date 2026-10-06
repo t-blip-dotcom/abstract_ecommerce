@@ -1,36 +1,27 @@
 /**
  * admin-orders.js
- * Order management. Admin/manager can see everything; staff can see
- * the same table but their only allowed action — per your role
- * spec — is updating the order status, which is also all this table
- * lets anyone do today (there's no other order edit yet). Whoever
- * changes the status is recorded as `processed_by`.
- * Once the backend exists:
- *   - GET   /api/admin/orders
- *   - PATCH /api/admin/orders/:id/status   { order_status, processed_by }
+ * Wired to the real backend. Filters are sent as query params to
+ * GET /api/orders; changing a status PATCHes /api/orders/:id/status
+ * (the backend records who made the change and notifies the
+ * customer itself — nothing extra to do here for that). "Items"
+ * opens a modal fetching GET /api/orders/:id/items so you can see
+ * exactly what was ordered, not just the order total.
  */
 
 const ORDER_STATUSES = ['pending', 'paid', 'processing', 'shipped', 'delivered', 'cancelled', 'payment_failed'];
 const PAYMENT_STATUSES = ['pending', 'completed', 'failed', 'refunded'];
 
-let adminOrders = [
-  { order_id: 1042, customer: 'Amina Wanjiru', order_date: '2026-09-10', payment_method: 'mpesa', payment_status: 'completed', order_status: 'shipped', amount_paid: 1850, shipping_address: 'Kilimani, Nairobi', processed_by: 'Jane Kamau' },
-  { order_id: 1041, customer: 'Brian Otieno', order_date: '2026-09-10', payment_method: 'mpesa', payment_status: 'completed', order_status: 'processing', amount_paid: 920, shipping_address: 'South B, Nairobi', processed_by: 'Jane Kamau' },
-  { order_id: 1040, customer: 'Faith Nekesa', order_date: '2026-09-09', payment_method: 'cash_on_delivery', payment_status: 'pending', order_status: 'pending', amount_paid: null, shipping_address: 'Ruaka, Kiambu', processed_by: null },
-  { order_id: 1039, customer: 'Kevin Mwangi', order_date: '2026-09-08', payment_method: 'mpesa', payment_status: 'completed', order_status: 'delivered', amount_paid: 2260, shipping_address: 'Westlands, Nairobi', processed_by: 'Peter Otieno' }
-];
+const filterState = { status: '', paymentStatus: '', from: '', to: '', search: '' };
+let currentOrders = [];
 
-const filterState = { status: 'all', paymentStatus: 'all', from: '', to: '', search: '' };
-
-function filteredOrders() {
-  return adminOrders.filter(o => {
-    const matchesStatus = filterState.status === 'all' || o.order_status === filterState.status;
-    const matchesPayment = filterState.paymentStatus === 'all' || o.payment_status === filterState.paymentStatus;
-    const matchesFrom = !filterState.from || o.order_date >= filterState.from;
-    const matchesTo = !filterState.to || o.order_date <= filterState.to;
-    const matchesSearch = !filterState.search || o.customer.toLowerCase().includes(filterState.search);
-    return matchesStatus && matchesPayment && matchesFrom && matchesTo && matchesSearch;
-  });
+function buildQuery() {
+  const params = new URLSearchParams();
+  if (filterState.status) params.set('status', filterState.status);
+  if (filterState.paymentStatus) params.set('payment_status', filterState.paymentStatus);
+  if (filterState.from) params.set('from', filterState.from);
+  if (filterState.to) params.set('to', filterState.to);
+  if (filterState.search) params.set('search', filterState.search);
+  return params.toString();
 }
 
 function orderRowTemplate(o) {
@@ -41,40 +32,101 @@ function orderRowTemplate(o) {
   return `
     <tr>
       <td>#${o.order_id}</td>
-      <td>${o.customer}</td>
+      <td>${o.customer_name}</td>
       <td>${o.order_date}</td>
-      <td>${o.payment_method.replace('_', ' ')}</td>
+      <td>${(o.payment_method_name || '—').replace('_', ' ')}</td>
       <td><span class="status-badge status-badge--${o.payment_status === 'completed' ? 'paid' : o.payment_status}">${o.payment_status}</span></td>
-      <td>${o.amount_paid ? `KSh ${o.amount_paid.toLocaleString('en-KE')}` : '—'}</td>
-      <td>${o.processed_by || '—'}</td>
+      <td>${o.amount_paid ? `KSh ${Number(o.amount_paid).toLocaleString('en-KE')}` : '—'}</td>
+      <td>${o.processed_by_name || '—'}</td>
       <td>
         <select class="status-select" data-order-status="${o.order_id}">
           ${statusOptions}
         </select>
       </td>
+      <td>
+        <button class="table-actions" data-view-items="${o.order_id}" aria-label="View items for order ${o.order_id}">
+          <i data-lucide="list"></i>
+        </button>
+      </td>
     </tr>`;
+}
+
+async function loadOrders() {
+  const tbody = document.getElementById('admin-orders-body');
+  try {
+    const result = await api.get(`/orders?${buildQuery()}`);
+    currentOrders = result.orders;
+  } catch (err) {
+    window.showToast(err.message, 'error');
+    currentOrders = [];
+  }
+  renderAdminOrders();
 }
 
 function renderAdminOrders() {
   const tbody = document.getElementById('admin-orders-body');
   if (!tbody) return;
 
-  const rows = filteredOrders();
-  tbody.innerHTML = rows.length
-    ? rows.map(orderRowTemplate).join('')
-    : `<tr><td colspan="8"><div class="empty-state"><i data-lucide="search-x"></i><h3>No orders match those filters</h3></div></td></tr>`;
+  const hasActiveFilters = Object.values(filterState).some(v => v !== '');
+  const emptyMessage = hasActiveFilters
+    ? '<h3>No orders match those filters</h3><p>Try clearing them to see everything.</p>'
+    : '<h3>No orders yet</h3><p>Orders will show up here once customers start checking out.</p>';
+
+  tbody.innerHTML = currentOrders.length
+    ? currentOrders.map(orderRowTemplate).join('')
+    : `<tr><td colspan="9"><div class="empty-state"><i data-lucide="search-x"></i>${emptyMessage}</div></td></tr>`;
 
   if (window.lucide) lucide.createIcons();
 
   tbody.querySelectorAll('[data-order-status]').forEach(select => {
-    select.addEventListener('change', () => {
-      const order = adminOrders.find(o => o.order_id === Number(select.dataset.orderStatus));
-      if (!order) return;
-      order.order_status = select.value;
-      order.processed_by = window.adminShared.getStaffName();
-      renderAdminOrders();
-      window.showToast(`Order #${order.order_id} marked ${select.value.replace('_', ' ')}`, 'success');
+    select.addEventListener('change', async () => {
+      const orderId = select.dataset.orderStatus;
+      const newStatus = select.value;
+      select.disabled = true;
+      try {
+        await api.patch(`/orders/${orderId}/status`, { status: newStatus });
+        window.showToast(`Order #${orderId} marked ${newStatus.replace('_', ' ')}`, 'success');
+        loadOrders(); // refresh so "Processed by" picks up the change
+      } catch (err) {
+        window.showToast(err.message, 'error');
+        select.disabled = false;
+      }
     });
+  });
+
+  tbody.querySelectorAll('[data-view-items]').forEach(btn => {
+    btn.addEventListener('click', () => openOrderItemsModal(Number(btn.dataset.viewItems)));
+  });
+}
+
+async function openOrderItemsModal(orderId) {
+  const overlay = document.getElementById('order-items-modal');
+  const tbody = document.getElementById('order-items-body');
+  document.getElementById('order-items-title').textContent = `Order #${orderId} items`;
+  tbody.innerHTML = `<tr><td colspan="4">Loading…</td></tr>`;
+  overlay.classList.add('is-open');
+
+  try {
+    const items = await api.get(`/orders/${orderId}/items`);
+    tbody.innerHTML = items.length
+      ? items.map(i => `
+          <tr>
+            <td>${i.name}</td>
+            <td>${i.quantity}</td>
+            <td>KSh ${Number(i.price).toLocaleString('en-KE')}</td>
+            <td>KSh ${Number(i.subtotal).toLocaleString('en-KE')}</td>
+          </tr>`).join('')
+      : `<tr><td colspan="4">No items found for this order.</td></tr>`;
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="4">${err.message}</td></tr>`;
+  }
+}
+
+function initOrderItemsModal() {
+  const overlay = document.getElementById('order-items-modal');
+  document.getElementById('order-items-modal-close').addEventListener('click', () => overlay.classList.remove('is-open'));
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.classList.remove('is-open');
   });
 }
 
@@ -82,50 +134,56 @@ function populateFilterOptions() {
   const statusSelect = document.getElementById('filter-order-status');
   const paymentSelect = document.getElementById('filter-payment-status');
 
-  statusSelect.innerHTML = '<option value="all">All statuses</option>' +
+  statusSelect.innerHTML = '<option value="">All statuses</option>' +
     ORDER_STATUSES.map(s => `<option value="${s}">${s.replace('_', ' ')}</option>`).join('');
-  paymentSelect.innerHTML = '<option value="all">All payment statuses</option>' +
+  paymentSelect.innerHTML = '<option value="">All payment statuses</option>' +
     PAYMENT_STATUSES.map(s => `<option value="${s}">${s}</option>`).join('');
 }
 
 function initFilters() {
   document.getElementById('filter-order-status').addEventListener('change', (e) => {
     filterState.status = e.target.value;
-    renderAdminOrders();
+    loadOrders();
   });
   document.getElementById('filter-payment-status').addEventListener('change', (e) => {
     filterState.paymentStatus = e.target.value;
-    renderAdminOrders();
+    loadOrders();
   });
   document.getElementById('filter-date-from').addEventListener('change', (e) => {
     filterState.from = e.target.value;
-    renderAdminOrders();
+    loadOrders();
   });
   document.getElementById('filter-date-to').addEventListener('change', (e) => {
     filterState.to = e.target.value;
-    renderAdminOrders();
+    loadOrders();
   });
+
+  let debounceTimer;
   document.getElementById('filter-order-search').addEventListener('input', (e) => {
-    filterState.search = e.target.value.trim().toLowerCase();
-    renderAdminOrders();
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      filterState.search = e.target.value.trim();
+      loadOrders();
+    }, 300);
   });
+
   document.getElementById('filter-order-clear').addEventListener('click', () => {
-    filterState.status = 'all';
-    filterState.paymentStatus = 'all';
+    filterState.status = '';
+    filterState.paymentStatus = '';
     filterState.from = '';
     filterState.to = '';
     filterState.search = '';
-    document.getElementById('filter-order-status').value = 'all';
-    document.getElementById('filter-payment-status').value = 'all';
+    document.getElementById('filter-order-status').value = '';
+    document.getElementById('filter-payment-status').value = '';
     document.getElementById('filter-date-from').value = '';
     document.getElementById('filter-date-to').value = '';
     document.getElementById('filter-order-search').value = '';
-    renderAdminOrders();
+    loadOrders();
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  if (!window.adminShared.requirePageAccess('orders')) return;
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!(await window.adminShared.requirePageAccess('orders'))) return;
   window.adminShared.renderAdminNav('orders');
 
   if (window.adminShared.getCapability('orders') === 'update-status') {
@@ -134,5 +192,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   populateFilterOptions();
   initFilters();
-  renderAdminOrders();
+  initOrderItemsModal();
+  loadOrders();
 });

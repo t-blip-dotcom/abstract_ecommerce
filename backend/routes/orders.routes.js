@@ -107,6 +107,15 @@ router.get(
   })
 );
 
+router.get(
+  '/:id/items',
+  requireAuth,
+  requireRole(STAFF_ORDER_ROLES),
+  asyncHandler(async (req, res) => {
+    res.json(await orderQueries.getOrderItems(req.params.id));
+  })
+);
+
 router.patch(
   '/:id/status',
   requireAuth,

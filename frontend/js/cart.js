@@ -1,13 +1,31 @@
 /**
  * cart.js
- * Client-side cart state, persisted in localStorage so it survives a
- * refresh. Once a customer is logged in, `syncCartToServer()` is the
- * spot to POST this into the `cart` / `cart_items` tables instead.
+ * Two modes depending on login state:
+ *  - Guest: cart lives in localStorage, same as before — so
+ *    browsing and adding things works before creating an account.
+ *  - Logged in: cart lives on the server (cart/cart_items tables),
+ *    which is the only place checkout can read from, and always
+ *    reflects live stock.
+ * Every function here is async now, since the logged-in path always
+ * means a network call — callers use await.
  */
 
 const CART_STORAGE_KEY = 'cosmeticshop_cart';
+let cachedIsLoggedIn = null;
+let lastLoadedItems = [];
 
-function readCart() {
+async function isLoggedInCustomer() {
+  if (cachedIsLoggedIn !== null) return cachedIsLoggedIn;
+  try {
+    const { user } = await api.get('/auth/me');
+    cachedIsLoggedIn = user?.type === 'customer';
+  } catch {
+    cachedIsLoggedIn = false;
+  }
+  return cachedIsLoggedIn;
+}
+
+function readLocalCart() {
   try {
     return JSON.parse(localStorage.getItem(CART_STORAGE_KEY)) || [];
   } catch {
@@ -15,69 +33,123 @@ function readCart() {
   }
 }
 
-function writeCart(items) {
+function writeLocalCart(items) {
   localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
-  updateCartBadge();
 }
 
-function addItem(product, quantity = 1) {
-  const items = readCart();
-  const existing = items.find(i => i.product_id === product.product_id);
-  if (existing) {
-    existing.quantity += quantity;
+/** One shape for the whole UI, whichever source (server or local) it came from. */
+function normalizeServerItem(item) {
+  return {
+    cart_item_id: item.cart_item_id,
+    product_id: item.product_id,
+    name: item.name,
+    price: Number(item.price),
+    photo_url: item.photo_url,
+    quantity: item.quantity,
+    stock_quantity: item.stock_quantity,
+    is_available: item.is_available
+  };
+}
+
+async function readCart() {
+  if (await isLoggedInCustomer()) {
+    try {
+      const { items } = await api.get('/cart');
+      lastLoadedItems = items.map(normalizeServerItem);
+    } catch {
+      lastLoadedItems = [];
+    }
   } else {
-    items.push({
-      product_id: product.product_id,
-      name: product.name,
-      price: product.price,
-      photo_url: product.photo_url,
-      quantity
-    });
+    lastLoadedItems = readLocalCart();
   }
-  writeCart(items);
-  renderCartPreview();
+  return lastLoadedItems;
 }
 
-function removeItem(productId) {
-  const items = readCart().filter(i => i.product_id !== productId);
-  writeCart(items);
-  renderCartPreview();
-}
-
-function updateQuantity(productId, quantity) {
-  const items = readCart();
-  const item = items.find(i => i.product_id === productId);
-  if (!item) return;
-  if (quantity <= 0) {
-    return removeItem(productId);
+async function addItem(product, quantity = 1) {
+  if (await isLoggedInCustomer()) {
+    await api.post('/cart/items', { product_id: product.product_id, quantity });
+  } else {
+    const items = readLocalCart();
+    const existing = items.find(i => i.product_id === product.product_id);
+    if (existing) {
+      existing.quantity += quantity;
+    } else {
+      items.push({
+        product_id: product.product_id,
+        name: product.name,
+        price: product.price,
+        photo_url: product.photo_url,
+        quantity
+      });
+    }
+    writeLocalCart(items);
   }
-  item.quantity = quantity;
-  writeCart(items);
-  renderCartPreview();
+  await updateCartBadge();
 }
 
-function getTotal() {
-  return readCart().reduce((sum, i) => sum + i.price * i.quantity, 0);
+async function removeItem(item) {
+  if (await isLoggedInCustomer()) {
+    await api.delete(`/cart/items/${item.cart_item_id}`);
+  } else {
+    writeLocalCart(readLocalCart().filter(i => i.product_id !== item.product_id));
+  }
+  await updateCartBadge();
 }
 
-function getItemCount() {
-  // Number of distinct products in the cart, not the summed quantity —
-  // the badge answers "how many different things are in here?"
-  return readCart().length;
+async function updateQuantity(item, quantity) {
+  if (quantity <= 0) return removeItem(item);
+
+  if (await isLoggedInCustomer()) {
+    await api.patch(`/cart/items/${item.cart_item_id}`, { quantity });
+  } else {
+    const items = readLocalCart();
+    const existing = items.find(i => i.product_id === item.product_id);
+    if (existing) existing.quantity = quantity;
+    writeLocalCart(items);
+  }
+  await updateCartBadge();
 }
 
-function updateCartBadge() {
+async function getTotal() {
+  const items = await readCart();
+  return items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+}
+
+async function getItemCount() {
+  // Distinct products in the cart, not summed quantity.
+  const items = await readCart();
+  return items.length;
+}
+
+async function updateCartBadge() {
   const badge = document.getElementById('cart-badge');
   if (!badge) return;
-  const count = getItemCount();
+  const count = await getItemCount();
   badge.textContent = count;
   badge.dataset.count = count;
 }
 
+/**
+ * Called right after a successful customer login/register (see
+ * auth.js) — moves anything added while browsing as a guest onto
+ * the now-known server cart, so it isn't lost.
+ */
+async function syncLocalCartToServer() {
+  const localItems = readLocalCart();
+  if (!localItems.length) return;
+
+  cachedIsLoggedIn = true; // login just succeeded — skip the /auth/me round trip
+  for (const item of localItems) {
+    await api.post('/cart/items', { product_id: item.product_id, quantity: item.quantity }).catch(() => {});
+  }
+  localStorage.removeItem(CART_STORAGE_KEY);
+}
+
 function cartPreviewItemTemplate(item) {
+  const thumb = api.assetUrl(item.photo_url) || `https://placehold.co/80x80/E1F1FB/0074BD?text=${encodeURIComponent(item.name.charAt(0))}`;
   return `
     <li class="cart-preview-item">
-      <img src="${item.photo_url || `https://placehold.co/80x80/E1F1FB/0074BD?text=${encodeURIComponent(item.name.charAt(0))}`}" alt="${item.name}">
+      <img src="${thumb}" alt="${item.name}">
       <div class="cart-preview-details">
         <p class="cart-preview-name">${item.name}</p>
         <span class="cart-preview-meta">${item.quantity} × KSh ${item.price.toLocaleString('en-KE')}</span>
@@ -88,11 +160,11 @@ function cartPreviewItemTemplate(item) {
     </li>`;
 }
 
-function renderCartPreview() {
+async function renderCartPreview() {
   const panel = document.getElementById('cart-panel');
   if (!panel) return;
 
-  const items = readCart();
+  const items = await readCart();
   const list = panel.querySelector('.cart-preview-list');
   const footer = panel.querySelector('.cart-preview-footer');
 
@@ -107,14 +179,21 @@ function renderCartPreview() {
     list.innerHTML = items.map(cartPreviewItemTemplate).join('');
     if (footer) {
       footer.classList.remove('is-hidden');
-      footer.querySelector('.cart-preview-total').textContent = `KSh ${getTotal().toLocaleString('en-KE')}`;
+      const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+      footer.querySelector('.cart-preview-total').textContent = `KSh ${total.toLocaleString('en-KE')}`;
     }
   }
 
   if (window.lucide) lucide.createIcons();
 
   panel.querySelectorAll('[data-remove-item]').forEach(btn => {
-    btn.addEventListener('click', () => removeItem(Number(btn.dataset.removeItem)));
+    btn.addEventListener('click', async () => {
+      const item = lastLoadedItems.find(i => i.product_id === Number(btn.dataset.removeItem));
+      if (item) {
+        await removeItem(item);
+        renderCartPreview();
+      }
+    });
   });
 }
 
@@ -123,4 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderCartPreview();
 });
 
-window.cartModule = { addItem, removeItem, updateQuantity, getTotal, getItemCount, readCart };
+window.cartModule = {
+  addItem, removeItem, updateQuantity, getTotal, getItemCount, readCart,
+  syncLocalCartToServer, isLoggedInCustomer, renderCartPreview
+};

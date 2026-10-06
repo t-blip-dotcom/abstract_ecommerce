@@ -1,29 +1,16 @@
 /**
  * admin-staff.js
- * Staff management — admin only. Staff no longer sign up with a
- * company email; they pick a username + password themselves on
- * admin-login.html, which creates a `pending` row here. An admin
- * approves (or removes) the request — that's the only step admins
- * have to do, keeping their workload light.
- * Once the backend exists:
- *   - GET    /api/admin/staff
- *   - POST   /api/admin/staff              (admin-created accounts)
- *   - PATCH  /api/admin/staff/:id          (edit / approve)
- *   - DELETE /api/admin/staff/:id
+ * Admin only. Same api.get/post/patch/delete pattern as
+ * admin-categories.js — see that file's comments for the full
+ * explanation. The one extra action here is Approve, which is just
+ * a PATCH to a dedicated endpoint since that's the one thing an
+ * admin has to do per new hire.
  */
 
-const ROLES = ['admin', 'online_manager', 'staff'];
-const ROLE_LABELS = { admin: 'Admin', online_manager: 'Manager', staff: 'Staff' };
 const STATUS_LABELS = { pending: 'Pending approval', active: 'Active', inactive: 'Inactive' };
+const ROLES = ['admin', 'online_manager', 'staff'];
 
-let adminStaff = [
-  { staff_id: 1, name: 'Jane Kamau', username: 'admin', role: 'admin', status: 'active', last_login: '2026-09-12 09:14' },
-  { staff_id: 2, name: 'Peter Otieno', username: 'manager', role: 'online_manager', status: 'active', last_login: '2026-09-11 16:40' },
-  { staff_id: 3, name: 'Mercy Wambui', username: 'staff', role: 'staff', status: 'active', last_login: '2026-09-10 08:02' },
-  { staff_id: 4, name: 'Samuel Kiptoo', username: 'samkip', role: 'staff', status: 'inactive', last_login: '2026-08-29 12:11' },
-  { staff_id: 5, name: 'Lucy Nyambura', username: 'lucyn', role: 'staff', status: 'pending', last_login: null }
-];
-
+let adminStaff = [];
 let editingStaffId = null;
 
 function statusBadgeClass(status) {
@@ -37,9 +24,9 @@ function staffRowTemplate(s) {
     <tr>
       <td>${s.name}</td>
       <td>${s.username}</td>
-      <td>${ROLE_LABELS[s.role] || s.role}</td>
+      <td>${ROLE_LABELS[s.role_name] || s.role_name}</td>
       <td><span class="status-badge ${statusBadgeClass(s.status)}">${STATUS_LABELS[s.status] || s.status}</span></td>
-      <td>${s.last_login || '—'}</td>
+      <td>${s.last_login ? new Date(s.last_login).toLocaleString('en-KE') : '—'}</td>
       <td>
         <div class="table-actions">
           ${s.status === 'pending' ? `<button data-approve-staff="${s.staff_id}" aria-label="Approve ${s.name}"><i data-lucide="check"></i></button>` : ''}
@@ -50,36 +37,54 @@ function staffRowTemplate(s) {
     </tr>`;
 }
 
+async function loadStaff() {
+  try {
+    adminStaff = await api.get('/staff'); // backend already sorts pending-first
+  } catch (err) {
+    window.showToast(err.message, 'error');
+    adminStaff = [];
+  }
+  renderAdminStaff();
+}
+
 function renderAdminStaff() {
   const tbody = document.getElementById('admin-staff-body');
   if (!tbody) return;
 
-  // Pending requests first, so they don't get missed.
-  const sorted = [...adminStaff].sort((a, b) => (a.status === 'pending' ? -1 : 0) - (b.status === 'pending' ? -1 : 0));
-  tbody.innerHTML = sorted.map(staffRowTemplate).join('');
+  tbody.innerHTML = adminStaff.length
+    ? adminStaff.map(staffRowTemplate).join('')
+    : `<tr><td colspan="6"><div class="empty-state"><i data-lucide="user-cog"></i><h3>No staff yet</h3></div></td></tr>`;
   if (window.lucide) lucide.createIcons();
 
   tbody.querySelectorAll('[data-approve-staff]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const staff = adminStaff.find(s => s.staff_id === Number(btn.dataset.approveStaff));
-      if (!staff) return;
-      staff.status = 'active';
-      renderAdminStaff();
-      window.showToast(`${staff.name} approved — they can now log in`, 'success');
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.approveStaff;
+      try {
+        const staff = await api.patch(`/staff/${id}/approve`);
+        window.showToast(`${staff.name} approved — they can now log in`, 'success');
+        loadStaff();
+      } catch (err) {
+        window.showToast(err.message, 'error');
+      }
     });
   });
 
   tbody.querySelectorAll('[data-delete-staff]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const staff = adminStaff.find(s => s.staff_id === Number(btn.dataset.deleteStaff));
-      adminStaff = adminStaff.filter(s => s.staff_id !== Number(btn.dataset.deleteStaff));
-      renderAdminStaff();
-      window.showToast(`${staff?.name || 'Staff member'} removed`, 'success');
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.deleteStaff;
+      const staff = adminStaff.find(s => String(s.staff_id) === id);
+      try {
+        await api.delete(`/staff/${id}`);
+        window.showToast(`${staff?.name || 'Staff member'} removed`, 'success');
+        loadStaff();
+      } catch (err) {
+        window.showToast(err.message, 'error');
+      }
     });
   });
 
   tbody.querySelectorAll('[data-edit-staff]').forEach(btn => {
-    btn.addEventListener('click', () => openStaffModal(Number(btn.dataset.editStaff)));
+    btn.addEventListener('click', () => openStaffModal(btn.dataset.editStaff));
   });
 }
 
@@ -96,11 +101,11 @@ function openStaffModal(staffId) {
   form.reset();
 
   editingStaffId = staffId || null;
-  const staff = editingStaffId ? adminStaff.find(s => s.staff_id === editingStaffId) : null;
+  const staff = editingStaffId ? adminStaff.find(s => String(s.staff_id) === editingStaffId) : null;
 
   document.getElementById('staff-modal-title').textContent = staff ? 'Edit staff member' : 'Add staff member';
   document.getElementById('staff-form-submit').textContent = staff ? 'Save changes' : 'Save staff member';
-  populateRoleSelect(staff?.role || 'staff');
+  populateRoleSelect(staff?.role_name || 'staff');
   document.getElementById('staff-status').value = staff?.status || 'active';
 
   if (staff) {
@@ -122,40 +127,46 @@ function initStaffModal() {
   const form = document.getElementById('staff-form');
 
   window.initDirtyTracking(form);
-  document.getElementById('add-staff-btn').addEventListener('click', () => openStaffModal(null));
+
+  // Admins edit existing staff here (role/status); new staff always
+  // sign themselves up via admin-login.html's "Request access" tab,
+  // so there's no "Add staff member" button on this page.
   document.getElementById('staff-modal-close').addEventListener('click', () => window.confirmDiscard(form, closeStaffModal));
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) window.confirmDiscard(form, closeStaffModal);
   });
 
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!window.validateForm(form)) return;
+    if (!editingStaffId) return;
 
-    const values = {
+    const body = {
       name: document.getElementById('staff-name').value,
-      username: document.getElementById('staff-username').value,
       role: document.getElementById('staff-role').value,
       status: document.getElementById('staff-status').value
     };
+    const submitBtn = document.getElementById('staff-form-submit');
+    submitBtn.disabled = true;
 
-    if (editingStaffId) {
-      Object.assign(adminStaff.find(s => s.staff_id === editingStaffId), values);
+    try {
+      await api.patch(`/staff/${editingStaffId}`, body);
       window.showToast('Staff member updated', 'success');
-    } else {
-      adminStaff.unshift({ staff_id: Date.now(), last_login: null, ...values });
-      window.showToast('Staff member added', 'success');
+      window.markFormClean(form);
+      closeStaffModal();
+      loadStaff();
+    } catch (err) {
+      window.applyServerFieldErrors(form, err.fieldErrors);
+      window.showToast(err.message, 'error');
+    } finally {
+      submitBtn.disabled = false;
     }
-
-    renderAdminStaff();
-    window.markFormClean(form);
-    closeStaffModal();
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  if (!window.adminShared.requirePageAccess('staff')) return;
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!(await window.adminShared.requirePageAccess('staff'))) return;
   window.adminShared.renderAdminNav('staff');
   initStaffModal();
-  renderAdminStaff();
+  loadStaff();
 });

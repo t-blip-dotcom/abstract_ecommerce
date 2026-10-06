@@ -23,7 +23,7 @@ function highlightMatch(name, term) {
 }
 
 function suggestionItemTemplate(product, term) {
-  const thumb = product.photo_url ||
+  const thumb = api.assetUrl(product.photo_url) ||
     `https://placehold.co/64x64/E1F1FB/0074BD?text=${encodeURIComponent(product.name.charAt(0))}`;
 
   return `

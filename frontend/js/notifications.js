@@ -1,55 +1,78 @@
 /**
  * notifications.js
- * Renders the notifications dropdown — order status changes and
- * promotions. Mocked for now; swap loadNotifications() for
- * `api.get('/notifications')` once that endpoint exists.
+ * Order-status and promotion notifications only make sense for a
+ * known customer, so guests see a prompt to log in here instead of
+ * an empty list pretending there's nothing to show.
  */
 
-const MOCK_NOTIFICATIONS = [
-  { id: 1, type: 'order', title: 'Order #1042 shipped', body: 'Your order is on its way and should arrive within 2 days.', time: '2h ago', unread: true },
-  { id: 2, type: 'promo', title: '20% off Hair Oils this week', body: 'Use code HAIR20 at checkout, valid through Sunday.', time: '1d ago', unread: true },
-  { id: 3, type: 'order', title: 'Order #1039 delivered', body: 'Delivered to your shipping address. Enjoy!', time: '3d ago', unread: false }
-];
-
 function notificationIcon(type) {
-  return type === 'order' ? 'package' : 'tag';
+  if (type === 'order_status') return 'package';
+  if (type === 'stock') return 'alert-triangle';
+  return 'tag'; // promotion
+}
+
+function timeAgo(dateString) {
+  const diffMs = Date.now() - new Date(dateString).getTime();
+  const minutes = Math.floor(diffMs / 60000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
 }
 
 function notificationTemplate(note) {
   return `
-    <li class="notification-item ${note.unread ? 'is-unread' : ''}">
+    <li class="notification-item ${note.is_read ? '' : 'is-unread'}">
       <span class="notification-item-icon"><i data-lucide="${notificationIcon(note.type)}"></i></span>
       <div class="notification-item-body">
         <p class="notification-item-title">${note.title}</p>
-        <p class="notification-item-text">${note.body}</p>
-        <span class="notification-item-time">${note.time}</span>
+        <p class="notification-item-text">${note.body || ''}</p>
+        <span class="notification-item-time">${timeAgo(note.created_at)}</span>
       </div>
     </li>`;
 }
 
-async function loadNotifications() {
-  if (api.useMockData) return Promise.resolve(MOCK_NOTIFICATIONS);
-  return api.get('/notifications');
+function loginPromptTemplate() {
+  return `
+    <div class="dropdown-panel-empty">
+      <i data-lucide="lock"></i>
+      <p>Log in to see your order updates and promotions.</p>
+      <a href="login.html?redirect=notifications.html" class="btn btn--primary btn--sm">Log in</a>
+    </div>`;
 }
 
 async function renderNotifications() {
   const lists = document.querySelectorAll('.notification-list');
   if (!lists.length) return;
 
-  const notifications = await loadNotifications();
-  const unreadCount = notifications.filter(n => n.unread).length;
+  const loggedIn = await window.cartModule.isLoggedInCustomer();
 
-  const badge = document.getElementById('notifications-badge');
-  if (badge) {
-    badge.textContent = unreadCount;
-    badge.dataset.count = unreadCount;
+  if (!loggedIn) {
+    lists.forEach(list => { list.innerHTML = loginPromptTemplate(); });
+    if (window.lucide) lucide.createIcons();
+    return;
   }
 
-  const html = notifications.length
-    ? notifications.map(notificationTemplate).join('')
-    : `<div class="dropdown-panel-empty"><i data-lucide="bell-off"></i><p>No notifications yet</p></div>`;
+  try {
+    const { notifications, unreadCount } = await api.get('/notifications');
 
-  lists.forEach(list => { list.innerHTML = html; });
+    const badge = document.getElementById('notifications-badge');
+    if (badge) {
+      badge.textContent = unreadCount;
+      badge.dataset.count = unreadCount;
+    }
+
+    const html = notifications.length
+      ? notifications.map(notificationTemplate).join('')
+      : `<div class="dropdown-panel-empty"><i data-lucide="bell-off"></i><p>No notifications yet</p></div>`;
+
+    lists.forEach(list => { list.innerHTML = html; });
+  } catch (err) {
+    lists.forEach(list => {
+      list.innerHTML = `<div class="dropdown-panel-empty"><p>${err.message}</p></div>`;
+    });
+  }
 
   if (window.lucide) lucide.createIcons();
 }

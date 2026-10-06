@@ -11,18 +11,22 @@ const { body, query } = require('express-validator');
 const router = express.Router();
 const validate = require('../middleware/validate');
 const { asyncHandler } = require('../middleware/errorHandler');
-const { requireAuth } = require('../middleware/auth.middleware');
+const { requireAuth, attachUserIfPresent } = require('../middleware/auth.middleware');
 const requireRole = require('../middleware/requireRole.middleware');
 const { upload, uploadedFileUrl } = require('../middleware/upload.middleware');
 const productQueries = require('../queries/products.queries');
 
 const MANAGE_ROLES = ['admin', 'online_manager'];
 
+// Staff (any role) can see inactive products; shoppers and guests can't.
+const isStaff = (req) => req.user?.type === 'staff';
+
 router.get(
   '/',
+  attachUserIfPresent,
   [
     query('page').optional().isInt({ min: 1 }).toInt(),
-    query('per_page').optional().isInt({ min: 1, max: 60 }).toInt()
+    query('per_page').optional().isInt({ min: 1, max: 500 }).toInt()
   ],
   validate,
   asyncHandler(async (req, res) => {
@@ -31,7 +35,8 @@ router.get(
     const perPage = req.query.per_page || 12;
 
     const result = await productQueries.listProducts({
-      category_id, brand_id, status, search, sort, page, perPage
+      category_id, brand_id, status, search, sort, page, perPage,
+      includeInactive: isStaff(req)
     });
 
     res.json({ ...result, page, perPage });
@@ -42,9 +47,9 @@ router.get('/low-stock', requireAuth, requireRole(MANAGE_ROLES), asyncHandler(as
   res.json(await productQueries.listLowStock());
 }));
 
-router.get('/:id', asyncHandler(async (req, res) => {
+router.get('/:id', attachUserIfPresent, asyncHandler(async (req, res) => {
   const product = await productQueries.getProductById(req.params.id);
-  if (!product) return res.status(404).json({ error: 'Product not found.' });
+  if (!product || (product.status === 'inactive' && !isStaff(req))) return res.status(404).json({ error: 'Product not found.' });
   res.json(product);
 }));
 

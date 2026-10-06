@@ -1,19 +1,10 @@
 /**
  * admin-customers.js
- * Customer directory — admin only. Fields mirror the customers
- * table. Customers register themselves on the storefront, so
- * there's no "add customer" here — just viewing, and editing
- * contact details for support purposes.
- * Once the backend exists: GET /api/admin/customers, PATCH /api/admin/customers/:id
+ * Admin only, view + edit (no add/delete — customers register
+ * themselves). Same api.get/patch pattern as the other admin pages.
  */
 
-let adminCustomers = [
-  { customer_id: 1, name: 'Amina Wanjiru', primary_phone: '0711 222 333', alternative_phone: '', address: 'Kilimani, Nairobi', email_address: 'amina.w@example.com' },
-  { customer_id: 2, name: 'Brian Otieno', primary_phone: '0722 333 444', alternative_phone: '0733 444 555', address: 'South B, Nairobi', email_address: 'brian.o@example.com' },
-  { customer_id: 3, name: 'Faith Nekesa', primary_phone: '0700 111 222', alternative_phone: '', address: 'Ruaka, Kiambu', email_address: 'faith.n@example.com' },
-  { customer_id: 4, name: 'Kevin Mwangi', primary_phone: '0733 555 666', alternative_phone: '', address: 'Westlands, Nairobi', email_address: 'kevin.m@example.com' }
-];
-
+let adminCustomers = [];
 let editingCustomerId = null;
 
 function customerRowTemplate(c) {
@@ -32,15 +23,27 @@ function customerRowTemplate(c) {
     </tr>`;
 }
 
+async function loadCustomers() {
+  try {
+    adminCustomers = await api.get('/customers');
+  } catch (err) {
+    window.showToast(err.message, 'error');
+    adminCustomers = [];
+  }
+  renderAdminCustomers();
+}
+
 function renderAdminCustomers() {
   const tbody = document.getElementById('admin-customers-body');
   if (!tbody) return;
 
-  tbody.innerHTML = adminCustomers.map(customerRowTemplate).join('');
+  tbody.innerHTML = adminCustomers.length
+    ? adminCustomers.map(customerRowTemplate).join('')
+    : `<tr><td colspan="6"><div class="empty-state"><i data-lucide="users-round"></i><h3>No customers yet</h3></div></td></tr>`;
   if (window.lucide) lucide.createIcons();
 
   tbody.querySelectorAll('[data-edit-customer]').forEach(btn => {
-    btn.addEventListener('click', () => openCustomerModal(Number(btn.dataset.editCustomer)));
+    btn.addEventListener('click', () => openCustomerModal(btn.dataset.editCustomer));
   });
 }
 
@@ -50,7 +53,7 @@ function openCustomerModal(customerId) {
   form.reset();
 
   editingCustomerId = customerId;
-  const customer = adminCustomers.find(c => c.customer_id === customerId);
+  const customer = adminCustomers.find(c => String(c.customer_id) === customerId);
   if (!customer) return;
 
   document.getElementById('customer-name').value = customer.name;
@@ -78,29 +81,39 @@ function initCustomerModal() {
     if (e.target === overlay) window.confirmDiscard(form, closeCustomerModal);
   });
 
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!window.validateForm(form)) return;
     if (!editingCustomerId) return;
 
-    Object.assign(adminCustomers.find(c => c.customer_id === editingCustomerId), {
+    const body = {
       name: document.getElementById('customer-name').value,
       primary_phone: document.getElementById('customer-primary-phone').value,
       alternative_phone: document.getElementById('customer-alt-phone').value,
       address: document.getElementById('customer-address').value,
       email_address: document.getElementById('customer-email').value
-    });
+    };
+    const submitBtn = form.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
 
-    renderAdminCustomers();
-    window.markFormClean(form);
-    closeCustomerModal();
-    window.showToast('Customer details updated', 'success');
+    try {
+      await api.patch(`/customers/${editingCustomerId}`, body);
+      window.markFormClean(form);
+      closeCustomerModal();
+      loadCustomers();
+      window.showToast('Customer details updated', 'success');
+    } catch (err) {
+      window.applyServerFieldErrors(form, err.fieldErrors);
+      window.showToast(err.message, 'error');
+    } finally {
+      submitBtn.disabled = false;
+    }
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  if (!window.adminShared.requirePageAccess('customers')) return;
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!(await window.adminShared.requirePageAccess('customers'))) return;
   window.adminShared.renderAdminNav('customers');
   initCustomerModal();
-  renderAdminCustomers();
+  loadCustomers();
 });

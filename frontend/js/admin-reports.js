@@ -1,89 +1,81 @@
 /**
  * admin-reports.js
- * Reports — admin & manager. Sales overview, low-stock alerts, and
- * a read-only view of every order. Once the backend exists, these
- * come from aggregate queries, e.g.:
- *   - SELECT SUM(amount_paid) ... GROUP BY DATE(order_date)
- *   - SELECT * FROM products WHERE stock_quantity < 15 (0 = out of stock)
- *   - SELECT * FROM orders JOIN customers ...
+ * Admin & manager. One GET /api/reports call returns sales stats
+ * plus the low-stock list in a single response (see
+ * reports.routes.js) — the "all orders" table below it is a second,
+ * separate call to the same orders listing admin-orders.js uses.
  */
 
-const MOCK_SALES_STATS = {
-  totalSalesToday: 8420,
-  totalSalesWeek: 54200,
-  ordersToday: 6,
-  activeProducts: 34
-};
-
-const MOCK_LOW_STOCK = [
-  { product_id: 2, name: 'Coconut Hair Oil', category: 'Hair Oils', stock_quantity: 3 },
-  { product_id: 9, name: 'Curl Defining Cream', category: 'Hair Care', stock_quantity: 4 },
-  { product_id: 6, name: 'Shea Butter Lotion', category: 'Lotions', stock_quantity: 0 }
-];
-
-const MOCK_ALL_ORDERS = [
-  { order_id: 1042, customer: 'Amina Wanjiru', date: '2026-09-10', total: 1850, status: 'shipped' },
-  { order_id: 1041, customer: 'Brian Otieno', date: '2026-09-10', total: 920, status: 'processing' },
-  { order_id: 1040, customer: 'Faith Nekesa', date: '2026-09-09', total: 640, status: 'pending' },
-  { order_id: 1039, customer: 'Kevin Mwangi', date: '2026-09-08', total: 2260, status: 'delivered' },
-  { order_id: 1038, customer: 'Grace Achieng', date: '2026-09-07', total: 480, status: 'cancelled' }
-];
-
-function renderStats() {
+function renderStats(stats) {
   const grid = document.getElementById('stat-grid');
   if (!grid) return;
 
   grid.innerHTML = `
     <div class="stat-card">
       <p class="stat-card-label">Sales today</p>
-      <p class="stat-card-value">KSh ${MOCK_SALES_STATS.totalSalesToday.toLocaleString('en-KE')}</p>
-      <span class="stat-card-delta is-up">This week: KSh ${MOCK_SALES_STATS.totalSalesWeek.toLocaleString('en-KE')}</span>
+      <p class="stat-card-value">KSh ${Number(stats.sales_today).toLocaleString('en-KE')}</p>
+      <span class="stat-card-delta is-up">This week: KSh ${Number(stats.sales_week).toLocaleString('en-KE')}</span>
     </div>
     <div class="stat-card">
       <p class="stat-card-label">Orders today</p>
-      <p class="stat-card-value">${MOCK_SALES_STATS.ordersToday}</p>
+      <p class="stat-card-value">${stats.orders_today}</p>
     </div>
     <div class="stat-card">
       <p class="stat-card-label">Active products</p>
-      <p class="stat-card-value">${MOCK_SALES_STATS.activeProducts}</p>
+      <p class="stat-card-value">${stats.active_products}</p>
     </div>
     <div class="stat-card">
       <p class="stat-card-label">Low stock alerts</p>
-      <p class="stat-card-value stat-card-value-danger">${MOCK_LOW_STOCK.length}</p>
+      <p class="stat-card-value stat-card-value-danger">${stats.low_stock.length}</p>
     </div>`;
 }
 
-function renderLowStock() {
+function renderLowStock(lowStock) {
   const tbody = document.getElementById('low-stock-body');
   if (!tbody) return;
 
-  tbody.innerHTML = MOCK_LOW_STOCK.map(p => `
-    <tr>
-      <td>${p.name}</td>
-      <td>${p.category}</td>
-      <td><span class="status-badge ${p.stock_quantity === 0 ? 'status-badge--out_of_stock' : 'status-badge--pending'}">${p.stock_quantity} left</span></td>
-    </tr>`).join('');
+  tbody.innerHTML = lowStock.length
+    ? lowStock.map(p => `
+        <tr>
+          <td>${p.name}</td>
+          <td>${p.category_name}</td>
+          <td><span class="status-badge ${p.stock_quantity === 0 ? 'status-badge--out_of_stock' : 'status-badge--pending'}">${p.stock_quantity} left</span></td>
+        </tr>`).join('')
+    : `<tr><td colspan="3">Nothing running low right now.</td></tr>`;
 }
 
-function renderAllOrders() {
+async function renderAllOrders() {
   const tbody = document.getElementById('all-orders-body');
   if (!tbody) return;
 
-  tbody.innerHTML = MOCK_ALL_ORDERS.map(o => `
-    <tr>
-      <td>#${o.order_id}</td>
-      <td>${o.customer}</td>
-      <td>${o.date}</td>
-      <td>KSh ${o.total.toLocaleString('en-KE')}</td>
-      <td><span class="status-badge status-badge--${o.status}">${o.status.replace('_', ' ')}</span></td>
-    </tr>`).join('');
+  try {
+    const { orders } = await api.get('/orders');
+    tbody.innerHTML = orders.length
+      ? orders.map(o => `
+          <tr>
+            <td>#${o.order_id}</td>
+            <td>${o.customer_name}</td>
+            <td>${o.order_date}</td>
+            <td>${o.amount_paid ? `KSh ${Number(o.amount_paid).toLocaleString('en-KE')}` : '—'}</td>
+            <td><span class="status-badge status-badge--${o.order_status}">${o.order_status.replace('_', ' ')}</span></td>
+          </tr>`).join('')
+      : `<tr><td colspan="5">No orders yet.</td></tr>`;
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="5">${err.message}</td></tr>`;
+  }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  if (!window.adminShared.requirePageAccess('reports')) return;
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!(await window.adminShared.requirePageAccess('reports'))) return;
   window.adminShared.renderAdminNav('reports');
 
-  renderStats();
-  renderLowStock();
+  try {
+    const stats = await api.get('/reports');
+    renderStats(stats);
+    renderLowStock(stats.low_stock);
+  } catch (err) {
+    window.showToast(err.message, 'error');
+  }
+
   renderAllOrders();
 });

@@ -1,9 +1,10 @@
 /**
  * auth.js
- * Customer login / register page: tab switching plus mock submit
- * handlers. Wire these to POST /api/auth/login and
- * POST /api/auth/register once the backend exists — on success the
- * server should set a session cookie and this script just redirects.
+ * Customer login / register page. After a successful login or
+ * signup: sync anything added to the cart as a guest onto the real
+ * server cart (see cart.js), then go wherever the person was headed
+ * before they were asked to log in — cart-page.js sends people here
+ * as login.html?redirect=cart.html, otherwise it's just the home page.
  */
 
 function initAuthTabs() {
@@ -21,24 +22,57 @@ function initAuthTabs() {
   });
 }
 
+async function afterLoginSuccess(message) {
+  await window.cartModule.syncLocalCartToServer();
+  window.showToast(message, 'success');
+  const redirect = new URLSearchParams(window.location.search).get('redirect');
+  window.location.href = redirect || 'index.html';
+}
+
 function initAuthForms() {
   const loginForm = document.getElementById('login-form');
   const registerForm = document.getElementById('register-form');
 
-  loginForm?.addEventListener('submit', (e) => {
+  loginForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!window.validateForm(loginForm)) return;
-    // Mock: replace with api.post('/auth/login', { email, password })
-    window.showToast('Logged in successfully.', 'success');
-    window.location.href = 'index.html';
+
+    const submitBtn = loginForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    try {
+      await api.post('/auth/login', {
+        email_address: document.getElementById('login-email').value,
+        password: document.getElementById('login-password').value
+      });
+      await afterLoginSuccess('Logged in successfully.');
+    } catch (err) {
+      window.applyServerFieldErrors(loginForm, err.fieldErrors);
+      window.showToast(err.message, 'error');
+    } finally {
+      submitBtn.disabled = false;
+    }
   });
 
-  registerForm?.addEventListener('submit', (e) => {
+  registerForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!window.validateForm(registerForm)) return;
-    // Mock: replace with api.post('/auth/register', { name, email, phone, password })
-    window.showToast('Account created successfully.', 'success');
-    window.location.href = 'index.html';
+
+    const submitBtn = registerForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    try {
+      await api.post('/auth/register', {
+        name: document.getElementById('register-name').value,
+        primary_phone: document.getElementById('register-phone').value,
+        email_address: document.getElementById('register-email').value,
+        password: document.getElementById('register-password').value
+      });
+      await afterLoginSuccess('Account created successfully.');
+    } catch (err) {
+      window.applyServerFieldErrors(registerForm, err.fieldErrors);
+      window.showToast(err.message, 'error');
+    } finally {
+      submitBtn.disabled = false;
+    }
   });
 }
 

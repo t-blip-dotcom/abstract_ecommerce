@@ -20,7 +20,7 @@
   }
 
   .container {
-    padding: 0 var(--space-4);
+    padding: 0 var(--space-5);
   }
 
   .header-greeting {
@@ -29,11 +29,16 @@
 
   .product-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-3);
+    gap: var(--space-4);
   }
 
-  h1 { font-size: var(--fs-xl); }
-  h2 { font-size: var(--fs-md); }
+  h1 {
+    font-size: var(--fs-xl);
+  }
+
+  h2 {
+    font-size: var(--fs-md);
+  }
 
   .dropdown-panel {
     right: var(--space-4);
@@ -51,8 +56,12 @@
 }
 
 @media (max-width: 380px) {
+  .container {
+    padding: 0 var(--space-4);
+  }
+
   .product-grid {
     grid-template-columns: 1fr 1fr;
-    gap: var(--space-2);
+    gap: var(--space-3);
   }
 }

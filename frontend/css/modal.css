@@ -72,3 +72,16 @@
   color: var(--color-primary);
   margin-bottom: var(--space-3);
 }
+
+.confirm-dialog-message {
+  margin: 0 0 var(--space-5);
+}
+
+.confirm-dialog-actions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.confirm-dialog-actions .btn {
+  flex: 1;
+}

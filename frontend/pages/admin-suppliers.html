@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="../js/theme-init.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suppliers — Abstract Cosmetics Admin</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/base.css">
+    <link rel="stylesheet" href="../css/header.css">
+    <link rel="stylesheet" href="../css/buttons.css">
+    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="../css/modal.css">
+    <link rel="stylesheet" href="../css/toast.css">
+    <link rel="stylesheet" href="../css/responsive.css">
+</head>
+
+<body>
+
+    <div class="admin-layout">
+        <aside class="admin-sidebar">
+            <div class="admin-sidebar-topbar">
+                <div class="admin-sidebar-brand">
+                    <i data-lucide="sparkles"></i> Abstract Admin
+                </div>
+                <button class="admin-sidebar-toggle" id="admin-sidebar-toggle" type="button" aria-label="Toggle menu">
+                    <i data-lucide="menu"></i>
+                </button>
+            </div>
+            <div class="admin-sidebar-panel" id="admin-sidebar-panel">
+                <p class="admin-sidebar-role" id="admin-role-label"></p>
+                <nav class="admin-nav" id="admin-nav"></nav>
+                <a class="admin-sidebar-logout" href="index.html" target="_blank" rel="noopener">
+                    <i data-lucide="store"></i> View store
+                </a>
+                <button class="admin-sidebar-logout" id="admin-logout" type="button">
+                    <i data-lucide="log-out"></i> Log out
+                </button>
+            </div>
+        </aside>
+
+        <main class="admin-main">
+            <div class="admin-topbar">
+                <div>
+                    <h1>Suppliers</h1>
+                    <p>Who supplies each product — required before you can add one.</p>
+                </div>
+                <button class="btn btn--primary" id="add-supplier-btn"><i data-lucide="plus"></i> Add supplier</button>
+            </div>
+
+            <div class="data-table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Supplier</th>
+                            <th>Phone</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-suppliers-body"></tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="supplier-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="supplier-modal-title">Add supplier</h3>
+                <button class="modal-close" id="supplier-modal-close" type="button">Cancel</button>
+            </div>
+            <form id="supplier-form" novalidate>
+                <div class="field">
+                    <label for="supplier-name">Supplier name</label>
+                    <input type="text" id="supplier-name" required>
+                </div>
+                <div class="field">
+                    <label for="supplier-phone">Phone</label>
+                    <input type="tel" id="supplier-phone">
+                </div>
+                <button type="submit" class="btn btn--primary btn--full" id="supplier-form-submit">Save
+                    supplier</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/forms.js"></script>
+    <script src="../js/admin-shared.js"></script>
+    <script src="../js/admin-suppliers.js"></script>
+</body>
+
+</html>

@@ -1,7 +1,8 @@
 /**
  * product-detail.js
- * Reads the product id from the URL (?id=), finds it in the shared
- * catalog loaded by products.js, and renders the detail view.
+ * Reads the product id from the URL (?id=) and fetches that one
+ * product directly from the backend (products.js is still loaded on
+ * this page just for its formatPrice() helper and shared styling).
  */
 
 function stockInfo(product) {
@@ -22,7 +23,7 @@ function renderProductDetail(product) {
 
   root.innerHTML = `
     <div class="product-detail-media">
-      <img src="${product.photo_url || `https://placehold.co/700x700/E1F1FB/0074BD?text=${encodeURIComponent(product.name)}`}" alt="${product.name}">
+      <img src="${api.assetUrl(product.photo_url) || `https://placehold.co/700x700/E1F1FB/0074BD?text=${encodeURIComponent(product.name)}`}" alt="${product.name}">
     </div>
     <div>
       <span class="product-detail-category">${product.category}</span>
@@ -73,13 +74,20 @@ function attachDetailHandlers(product) {
     qtyInput.value = clampQty(Number(qtyInput.value) || 1);
   });
 
-  addBtn.addEventListener('click', () => {
+  addBtn.addEventListener('click', async () => {
     if (addBtn.disabled || product.stock_quantity === 0) {
       window.showToast(`${product.name} is out of stock.`, 'error');
       return;
     }
-    window.cartModule.addItem(product, Number(qtyInput.value));
-    window.showToast(`Added ${product.name} to cart`, 'success');
+    addBtn.disabled = true;
+    try {
+      await window.cartModule.addItem(product, Number(qtyInput.value));
+      window.showToast(`Added ${product.name} to cart`, 'success');
+    } catch (err) {
+      window.showToast(err.message, 'error');
+    } finally {
+      addBtn.disabled = false;
+    }
   });
 }
 
@@ -87,11 +95,26 @@ async function initProductDetail() {
   const root = document.getElementById('product-detail-root');
   if (!root) return;
 
-  const products = await window.productsModule.loadProducts();
-  const id = Number(new URLSearchParams(window.location.search).get('id'));
-  const product = products.find(p => p.product_id === id) || products[0];
+  const id = new URLSearchParams(window.location.search).get('id');
+  if (!id) {
+    root.innerHTML = '<p>No product specified.</p>';
+    return;
+  }
 
-  renderProductDetail(product);
+  try {
+    const p = await api.get(`/products/${id}`);
+    renderProductDetail({
+      product_id: p.product_id,
+      name: p.name,
+      category: p.category_name,
+      brand: p.brand_name,
+      price: Number(p.price),
+      stock_quantity: p.stock_quantity,
+      photo_url: p.photo_url
+    });
+  } catch (err) {
+    root.innerHTML = `<p>${err.message}</p>`;
+  }
 }
 
 document.addEventListener('DOMContentLoaded', initProductDetail);

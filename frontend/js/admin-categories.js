@@ -1,18 +1,14 @@
 /**
  * admin-categories.js
- * Category management — admin & manager only.
- * Fields mirror the category table: category_name, description.
+ * Category management — admin & manager only. This is the simplest
+ * page to read as a template for how every other admin-*.js file
+ * talks to the real backend: api.get/post/patch/delete (see api.js),
+ * wrapped in try/catch so a failed request shows a red toast (and,
+ * for validation failures, red field messages) instead of silently
+ * doing nothing.
  */
 
-let adminCategories = [
-  { category_id: 1, category_name: 'Hair Care', description: 'Shampoos, conditioners, treatments' },
-  { category_id: 2, category_name: 'Skin Care', description: 'Facial and skin treatment products' },
-  { category_id: 3, category_name: 'Body Care', description: 'Body lotions, creams, scrubs' },
-  { category_id: 4, category_name: 'Hair Oils', description: 'Oils for hair growth and moisture' },
-  { category_id: 5, category_name: 'Lotions', description: 'Everyday moisturizing lotions' },
-  { category_id: 6, category_name: 'Leave-In', description: 'Leave-in hair conditioners and sprays' }
-];
-
+let adminCategories = [];
 let editingCategoryId = null;
 
 function categoryRowTemplate(c) {
@@ -29,19 +25,36 @@ function categoryRowTemplate(c) {
     </tr>`;
 }
 
+async function loadCategories() {
+  try {
+    adminCategories = await api.get('/categories');
+  } catch (err) {
+    window.showToast(err.message, 'error');
+    adminCategories = [];
+  }
+  renderAdminCategories();
+}
+
 function renderAdminCategories() {
   const tbody = document.getElementById('admin-categories-body');
   if (!tbody) return;
 
-  tbody.innerHTML = adminCategories.map(categoryRowTemplate).join('');
+  tbody.innerHTML = adminCategories.length
+    ? adminCategories.map(categoryRowTemplate).join('')
+    : `<tr><td colspan="3"><div class="empty-state"><i data-lucide="layout-grid"></i><h3>No categories yet</h3></div></td></tr>`;
   if (window.lucide) lucide.createIcons();
 
   tbody.querySelectorAll('[data-delete-category]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const category = adminCategories.find(c => c.category_id === Number(btn.dataset.deleteCategory));
-      adminCategories = adminCategories.filter(c => c.category_id !== Number(btn.dataset.deleteCategory));
-      renderAdminCategories();
-      window.showToast(`${category?.category_name || 'Category'} removed`, 'success');
+    btn.addEventListener('click', async () => {
+      const id = Number(btn.dataset.deleteCategory);
+      const category = adminCategories.find(c => c.category_id === id);
+      try {
+        await api.delete(`/categories/${id}`);
+        window.showToast(`${category?.category_name || 'Category'} removed`, 'success');
+        loadCategories();
+      } catch (err) {
+        window.showToast(err.message, 'error');
+      }
     });
   });
 
@@ -66,8 +79,8 @@ function openCategoryModal(categoryId) {
     document.getElementById('category-description').value = category.description || '';
   }
 
-  overlay.classList.add('is-open');
   window.markFormClean(form);
+  overlay.classList.add('is-open');
 }
 
 function closeCategoryModal() {
@@ -86,32 +99,40 @@ function initCategoryModal() {
     if (e.target === overlay) window.confirmDiscard(form, closeCategoryModal);
   });
 
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!window.validateForm(form)) return;
 
-    const values = {
+    const body = {
       category_name: document.getElementById('category-name').value,
       description: document.getElementById('category-description').value
     };
+    const submitBtn = document.getElementById('category-form-submit');
+    submitBtn.disabled = true;
 
-    if (editingCategoryId) {
-      Object.assign(adminCategories.find(c => c.category_id === editingCategoryId), values);
-      window.showToast('Category updated', 'success');
-    } else {
-      adminCategories.unshift({ category_id: Date.now(), ...values });
-      window.showToast('Category added', 'success');
+    try {
+      if (editingCategoryId) {
+        await api.patch(`/categories/${editingCategoryId}`, body);
+        window.showToast('Category updated', 'success');
+      } else {
+        await api.post('/categories', body);
+        window.showToast('Category added', 'success');
+      }
+      window.markFormClean(form);
+      closeCategoryModal();
+      loadCategories();
+    } catch (err) {
+      window.applyServerFieldErrors(form, err.fieldErrors);
+      window.showToast(err.message, 'error');
+    } finally {
+      submitBtn.disabled = false;
     }
-
-    renderAdminCategories();
-    window.markFormClean(form);
-    closeCategoryModal();
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  if (!window.adminShared.requirePageAccess('categories')) return;
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!(await window.adminShared.requirePageAccess('categories'))) return;
   window.adminShared.renderAdminNav('categories');
   initCategoryModal();
-  renderAdminCategories();
+  loadCategories();
 });
