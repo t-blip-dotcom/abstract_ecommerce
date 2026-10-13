@@ -1,48 +1,57 @@
-/**
- * middleware/auth.middleware.js
- * Reads the JWT from an httpOnly cookie (never from localStorage —
- * that would be readable by any injected script, which is a bigger
- * XSS risk), verifies it, and attaches the payload to req.user so
- * later route handlers know who's calling.
- *
- * Two customer/staff account types share this same middleware —
- * the payload's `type` field ('customer' or 'staff') plus `role`
- * (for staff) is what requireRole.middleware.js checks.
- */
-
 const jwt = require('jsonwebtoken');
+const pool = require('../db/pool');
 
-function requireAuth(req, res, next) {
-  const token = req.cookies?.token;
 
-  if (!token) {
-    return res.status(401).json({ error: 'You need to be logged in to do that.' });
-  }
+function extractToken(req) {
+  if (!req.cookies) return null;
+  if (req.cookies.token) return req.cookies.token;
+  if (req.cookies.auth_token) return req.cookies.auth_token;
+  if (req.cookies.jwt) return req.cookies.jwt;
+  if (req.cookies.session) return req.cookies.session;
+  
+  return Object.values(req.cookies).find(val => typeof val === 'string' && val.startsWith('eyJ')) || null;
+}
+
+async function requireAuth(req, res, next) {
+  const token = extractToken(req);
+  if (!token) return res.status(401).json({ error: 'Log in to continue.' });
 
   try {
-    req.user = jwt.verify(token, process.env.JWT_SECRET);
-    return next();
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    if (decoded.type === 'staff') {
+      const { rows } = await pool.query('SELECT status FROM STAFF WHERE staff_id = $1', [decoded.staff_id]);
+      if (!rows[0] || rows[0].status !== 'active') {
+        return res.status(403).json({ error: 'Session expired or account deactivated.' });
+      }
+    }
+    
+    req.user = decoded;
+    next();
   } catch (err) {
-    return res.status(401).json({ error: 'Your session has expired — please log in again.' });
+    console.error('Auth verification failed:', err.message);
+    res.status(401).json({ error: 'Invalid or expired session.' });
   }
 }
 
-/**
- * Like requireAuth, but doesn't fail if there's no token — it just
- * leaves req.user undefined. Useful for routes that behave slightly
- * differently for logged-in vs guest users without requiring login
- * (e.g. showing a saved cart if logged in).
- */
-function attachUserIfPresent(req, res, next) {
-  const token = req.cookies?.token;
+async function attachUserIfPresent(req, res, next) {
+  const token = extractToken(req);
   if (!token) return next();
 
   try {
-    req.user = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    if (decoded.type === 'staff') {
+      const { rows } = await pool.query('SELECT status FROM STAFF WHERE staff_id = $1', [decoded.staff_id]);
+      if (rows[0] && rows[0].status === 'active') {
+        req.user = decoded;
+      }
+    } else {
+      req.user = decoded;
+    }
   } catch (err) {
-    // Invalid/expired token on an optional route — just proceed as a guest.
   }
-  return next();
+  next();
 }
 
 module.exports = { requireAuth, attachUserIfPresent };

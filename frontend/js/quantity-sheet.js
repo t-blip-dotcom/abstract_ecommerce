@@ -1,17 +1,3 @@
-/**
- * quantity-sheet.js
- * Shared "add to cart" sheet used by every product card. Tapping
- * "Add to cart" on a card opens this instead of adding 1 item
- * straight away — it shows the product photo/name and a quantity
- * stepper (-, typed input, +), and only adds to the cart once the
- * shopper confirms.
- *
- * Markup expected on the page (see index.html / products.html):
- *   #quantity-sheet, #sheet-product-image, #sheet-product-name,
- *   #sheet-product-price, #sheet-qty-input, #sheet-stock-note,
- *   #sheet-add-to-cart-btn, plus [data-close-sheet] buttons.
- */
-
 let sheetProduct = null;
 
 function clampSheetQty(value) {

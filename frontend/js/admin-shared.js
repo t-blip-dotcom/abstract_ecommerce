@@ -1,14 +1,4 @@
-/**
- * admin-shared.js
- * Loaded on every admin page. The backend is the only source of
- * truth for who's logged in and what role they have — this just
- * asks it (GET /api/auth/me, which reads the httpOnly cookie) once
- * per page load and caches the answer for the rest of that page.
- *
- * requirePageAccess() is now async because it has to wait on that
- * network call — every admin-*.js file's init function awaits it
- * before doing anything else.
- */
+
 
 const ADMIN_NAV_ITEMS = [
   { key: 'products', href: 'admin-products.html', icon: 'package', label: 'Products' },
@@ -40,7 +30,7 @@ const PAGE_CAPABILITY = {
 
 const ROLE_LABELS = { admin: 'Admin', online_manager: 'Manager', staff: 'Staff' };
 
-let cachedUser = null; // { staff_id, role, status } from the JWT payload, or null if not logged in
+let cachedUser = null;
 
 async function fetchCurrentUser() {
   if (cachedUser !== null) return cachedUser;
@@ -48,8 +38,7 @@ async function fetchCurrentUser() {
     const { user } = await api.get('/auth/me');
     cachedUser = user?.type === 'staff' ? user : null;
   } catch (err) {
-    // Only a real 401 means "not logged in". A network failure or a 500
-    // must NOT look like a logout, or the page bounces back to the login form.
+
     if (err.status === 401) {
       cachedUser = null;
     } else {
@@ -118,10 +107,7 @@ function initAdminLogout() {
   });
 }
 
-/** Mobile: the sidebar's nav/logout/etc live in a collapsible panel
- *  behind a hamburger button instead of a horizontally-scrolling
- *  row — this just opens/closes it and closes it again once a nav
- *  link is tapped, so it doesn't stay open on the next page. */
+
 function initSidebarToggle() {
   const toggleBtn = document.getElementById('admin-sidebar-toggle');
   const panel = document.getElementById('admin-sidebar-panel');

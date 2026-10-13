@@ -9,7 +9,6 @@
       });
     });
 
-    // ---- Log in ----
     document.getElementById('staff-login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const form = e.target;
@@ -33,7 +32,6 @@
       }
     });
 
-    // ---- Request staff access ----
     document.getElementById('staff-request-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const form = e.target;

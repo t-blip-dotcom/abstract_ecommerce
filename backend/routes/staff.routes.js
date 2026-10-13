@@ -1,10 +1,4 @@
-/**
- * routes/staff.routes.js
- * Admin only, per the role spec. Approving a pending sign-up is a
- * single click (PATCH .../approve) — that's the one thing an admin
- * has to do per new hire, everything else (choosing a username/
- * password) the staff member already did themselves.
- */
+
 
 const express = require('express');
 const { body } = require('express-validator');

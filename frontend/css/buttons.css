@@ -83,6 +83,8 @@
 
 .search-bar input {
   flex: 1;
+  min-width: 0;
+  text-overflow: ellipsis;
   border: none;
   background: none;
   outline: none;

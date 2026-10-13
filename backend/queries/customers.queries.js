@@ -1,6 +1,4 @@
-/**
- * queries/customers.queries.js
- */
+
 
 const pool = require('../db/pool');
 

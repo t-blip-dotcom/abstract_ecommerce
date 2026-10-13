@@ -1,6 +1,4 @@
 
-/*Ensures consistensy of dark mode even when pages change and no  flicker */
-
 (function () {
   var THEME_MODE_KEY = 'cosmeticshop_theme_mode';
   var mode = localStorage.getItem(THEME_MODE_KEY);

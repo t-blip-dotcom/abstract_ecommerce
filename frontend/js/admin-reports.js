@@ -1,20 +1,13 @@
-/**
- * admin-reports.js
- * Admin & manager. One GET /api/reports call returns sales stats
- * plus the low-stock list in a single response (see
- * reports.routes.js) — the "all orders" table below it is a second,
- * separate call to the same orders listing admin-orders.js uses.
- */
+
 
 function renderStats(stats) {
   const grid = document.getElementById('stat-grid');
   if (!grid) return;
-
   grid.innerHTML = `
     <div class="stat-card">
-      <p class="stat-card-label">Sales today</p>
+      <p class="stat-card-label">Total Sales Today</p>
       <p class="stat-card-value">KSh ${Number(stats.sales_today).toLocaleString('en-KE')}</p>
-      <span class="stat-card-delta is-up">This week: KSh ${Number(stats.sales_week).toLocaleString('en-KE')}</span>
+      <span class="stat-card-delta">Cash: KSh ${Number(stats.cash_today).toLocaleString('en-KE')} | M-Pesa: KSh ${Number(stats.online_today).toLocaleString('en-KE')}</span>
     </div>
     <div class="stat-card">
       <p class="stat-card-label">Orders today</p>

@@ -34,7 +34,7 @@
   font-weight: 600;
   color: var(--color-text);
   margin: 0;
-  white-space: nowrap;
+  white-space: normal;
   overflow: hidden;
   text-overflow: ellipsis;
 }

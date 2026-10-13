@@ -1,8 +1,4 @@
-/**
- * routes/customers.routes.js
- * Admin only — a support directory, not a place to create
- * customers (they register themselves on the storefront).
- */
+
 
 const express = require('express');
 const { body } = require('express-validator');

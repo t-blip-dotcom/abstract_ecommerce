@@ -1,16 +1,3 @@
-/**
- * forms.js
- * Shared validation used by every form on the site (login, register,
- * staff login, checkout, add-product, etc). Call validateForm(formEl)
- * on submit before doing anything else — it returns true only if every
- * required field has a value, and otherwise shows an inline message
- * under each blank field plus focuses the first one.
- *
- * Expects each required input to sit inside a `.field` wrapper that
- * has a <label> and, ideally, a <span class="field-error"></span>
- * (added automatically if missing).
- */
-
 function fieldLabelText(field, input) {
   const label = field.querySelector('label');
   if (label) return label.textContent.replace('*', '').trim();
@@ -64,7 +51,7 @@ function validateForm(formEl) {
   return isValid;
 }
 
-// Clear a field's error state as soon as the person starts fixing it.
+
 document.addEventListener('input', (e) => {
   const field = e.target.closest?.('.field');
   if (field && field.classList.contains('has-error') && e.target.value.trim()) {
@@ -74,13 +61,7 @@ document.addEventListener('input', (e) => {
 
 window.validateForm = validateForm;
 
-/**
- * When the backend rejects a submit with field-level errors (see
- * ApiError.fieldErrors in api.js), this puts each message under the
- * matching input the same way client-side validation does — so a
- * server-side rule (e.g. "username already taken") looks identical
- * to a client-side one.
- */
+
 function applyServerFieldErrors(form, fieldErrors) {
   if (!form || !fieldErrors) return;
   Object.entries(fieldErrors).forEach(([fieldName, message]) => {
@@ -92,13 +73,7 @@ function applyServerFieldErrors(form, fieldErrors) {
 
 window.applyServerFieldErrors = applyServerFieldErrors;
 
-/**
- * Unsaved-changes protection for admin modals. Call initDirtyTracking(form)
- * once when the page loads, markFormClean(form) whenever the form is
- * freshly opened or successfully saved, and route every close/cancel/
- * outside-click through confirmDiscard(form, reallyClose) instead of
- * calling the close function directly.
- */
+
 function initDirtyTracking(form) {
   if (!form) return;
   form.dataset.dirty = 'false';
@@ -124,12 +99,7 @@ function confirmDiscard(form, onConfirmedClose) {
   });
 }
 
-/**
- * A small in-page confirm dialog, built the first time it's needed
- * and reused after that — styled like the rest of the site instead
- * of the browser's native confirm() popup. Returns a promise that
- * resolves true/false depending on which button was clicked.
- */
+
 function showConfirmDialog({ message, confirmLabel = 'Confirm', cancelLabel = 'Cancel' }) {
   return new Promise((resolve) => {
     let overlay = document.getElementById('confirm-dialog');
@@ -170,3 +140,24 @@ function showConfirmDialog({ message, confirmLabel = 'Confirm', cancelLabel = 'C
 window.initDirtyTracking = initDirtyTracking;
 window.markFormClean = markFormClean;
 window.confirmDiscard = confirmDiscard;
+function initPasswordToggles() {
+  document.querySelectorAll('.password-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const input = btn.previousElementSibling;
+      const icon = btn.querySelector('i');
+      
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.setAttribute('data-lucide', 'eye-off');
+      } else {
+        input.type = 'password';
+        icon.setAttribute('data-lucide', 'eye');
+      }
+      
+      
+      if (window.lucide) lucide.createIcons();
+    });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', initPasswordToggles);

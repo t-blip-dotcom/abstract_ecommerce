@@ -1,11 +1,11 @@
-/**
- * queries/brands.queries.js
- */
+
 
 const pool = require('../db/pool');
 
 async function listBrands() {
-  const { rows } = await pool.query('SELECT * FROM BRAND ORDER BY brand_name ASC');
+  const { rows } = await pool.query(
+    'SELECT * FROM BRAND WHERE is_deleted = FALSE ORDER BY brand_name ASC'
+  );
   return rows;
 }
 
@@ -29,7 +29,20 @@ async function updateBrand(brandId, { brand_name, description, logo_url }) {
 }
 
 async function deleteBrand(brandId) {
-  await pool.query('DELETE FROM BRAND WHERE brand_id = $1', [brandId]);
+  const { rows } = await pool.query(
+    `SELECT COUNT(*) as count 
+     FROM product 
+     WHERE brand_id = $1 AND is_deleted = FALSE`, 
+    [brandId]
+  );
+  
+  if (parseInt(rows[0].count, 10) > 0) {
+    throw new Error('Cannot delete this brand because it is still attached to active products. Reassign or delete those products first.');
+  }
+  await pool.query(
+    'UPDATE BRAND SET is_deleted = TRUE WHERE brand_id = $1', 
+    [brandId]
+  );
 }
 
 module.exports = { listBrands, createBrand, updateBrand, deleteBrand };

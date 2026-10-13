@@ -1,6 +1,4 @@
-/**
- * queries/staff.queries.js
- */
+
 
 const pool = require('../db/pool');
 
@@ -39,7 +37,7 @@ async function updateStaff(staffId, { name, role, status }) {
 }
 
 async function deleteStaff(staffId) {
-  await pool.query('DELETE FROM STAFF WHERE staff_id = $1', [staffId]);
+  await pool.query("UPDATE STAFF SET status = 'inactive' WHERE staff_id = $1", [staffId]);
 }
 
 module.exports = { listStaff, approveStaff, updateStaff, deleteStaff };

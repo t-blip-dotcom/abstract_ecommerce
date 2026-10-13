@@ -1,9 +1,4 @@
-/**
- * main.js
- * Page-wide glue: renders lucide icons once everything else has
- * written its markup, and handles opening/closing the cart and
- * notifications dropdown panels (click trigger, click outside, Escape).
- */
+
 
 function initIcons() {
   if (window.lucide) lucide.createIcons();
@@ -66,7 +61,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initDropdown('notifications-trigger', 'notifications-panel');
   initGlobalDismiss();
 
-  // Re-run icon creation once the dynamic modules (products, cart,
-  // notifications) finish their first render.
   setTimeout(initIcons, 50);
 });

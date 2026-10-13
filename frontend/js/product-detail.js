@@ -1,9 +1,3 @@
-/**
- * product-detail.js
- * Reads the product id from the URL (?id=) and fetches that one
- * product directly from the backend (products.js is still loaded on
- * this page just for its formatPrice() helper and shared styling).
- */
 
 function stockInfo(product) {
   if (product.stock_quantity === 0) {

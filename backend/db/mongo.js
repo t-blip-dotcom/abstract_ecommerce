@@ -1,4 +1,3 @@
-/*a mongodb database was creates to fit the notifications as they dont follow any defined structure and would be difficult to store in a relational database(postgre)*/
 
 const { MongoClient } = require('mongodb');
 

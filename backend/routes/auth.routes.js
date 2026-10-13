@@ -1,11 +1,3 @@
-/**
- * routes/auth.routes.js
- * Customer accounts and staff accounts are deliberately separate
- * flows sharing the same JWT/cookie mechanism (see config/jwt.js):
- *   - Customers register themselves with an email.
- *   - Staff pick a username + password and land in `pending` status
- *     until an admin approves them (see routes/staff.routes.js).
- */
 
 const express = require('express');
 const bcrypt = require('bcrypt');
@@ -20,9 +12,6 @@ const authQueries = require('../queries/auth.queries');
 
 const SALT_ROUNDS = Number(process.env.BCRYPT_SALT_ROUNDS) || 12;
 
-// ---------------------------------------------------------
-// Customers
-// ---------------------------------------------------------
 
 router.post(
   '/register',
@@ -63,9 +52,7 @@ router.post(
     const { email_address, password } = req.body;
     const customer = await authQueries.findCustomerByEmail(email_address);
 
-    // Same error for "no such account" and "wrong password" — this
-    // stops an attacker from using the error message to discover
-    // which emails are registered.
+  
     const invalidCredentials = () =>
       res.status(401).json({ error: 'Incorrect email or password.' });
 
@@ -95,9 +82,6 @@ router.get('/me', requireAuth, (req, res) => {
   res.json({ user: req.user });
 });
 
-// ---------------------------------------------------------
-// Staff — username + password, self-requested, admin-approved
-// ---------------------------------------------------------
 
 router.post(
   '/staff-request',

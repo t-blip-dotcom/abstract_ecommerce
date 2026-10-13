@@ -1,14 +1,4 @@
-/**
- * queries/cart.queries.js
- * The cart is only server-side once a customer is logged in (the
- * frontend's localStorage cart is for guests browsing before they
- * log in — see cart.routes.js for how the two merge at login).
- *
- * Every time the cart is read, it's joined live against the current
- * products.stock_quantity — so if someone else bought the last few
- * units between when this item was added and now, that's reflected
- * immediately instead of trusting a stale number saved earlier.
- */
+
 
 const pool = require('../db/pool');
 

@@ -1,18 +1,9 @@
-/**
- * cart.js
- * Two modes depending on login state:
- *  - Guest: cart lives in localStorage, same as before — so
- *    browsing and adding things works before creating an account.
- *  - Logged in: cart lives on the server (cart/cart_items tables),
- *    which is the only place checkout can read from, and always
- *    reflects live stock.
- * Every function here is async now, since the logged-in path always
- * means a network call — callers use await.
- */
+
 
 const CART_STORAGE_KEY = 'cosmeticshop_cart';
 let cachedIsLoggedIn = null;
 let lastLoadedItems = [];
+let cartWritePromise = null;
 
 async function isLoggedInCustomer() {
   if (cachedIsLoggedIn !== null) return cachedIsLoggedIn;
@@ -37,7 +28,6 @@ function writeLocalCart(items) {
   localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
 }
 
-/** One shape for the whole UI, whichever source (server or local) it came from. */
 function normalizeServerItem(item) {
   return {
     cart_item_id: item.cart_item_id,
@@ -52,6 +42,8 @@ function normalizeServerItem(item) {
 }
 
 async function readCart() {
+  if (cartWritePromise) await cartWritePromise;
+
   if (await isLoggedInCustomer()) {
     try {
       const { items } = await api.get('/cart');
@@ -66,37 +58,47 @@ async function readCart() {
 }
 
 async function addItem(product, quantity = 1) {
-  if (await isLoggedInCustomer()) {
-    await api.post('/cart/items', { product_id: product.product_id, quantity });
-  } else {
-    const items = readLocalCart();
-    const existing = items.find(i => i.product_id === product.product_id);
-    if (existing) {
-      existing.quantity += quantity;
+  cartWritePromise = (async () => {
+    if (await isLoggedInCustomer()) {
+      await api.post('/cart/items', { product_id: product.product_id, quantity });
     } else {
-      items.push({
-        product_id: product.product_id,
-        name: product.name,
-        price: product.price,
-        photo_url: product.photo_url,
-        quantity
-      });
+      const items = readLocalCart();
+      const existing = items.find(i => i.product_id === product.product_id);
+      if (existing) {
+        existing.quantity += quantity;
+      } else {
+        items.push({
+          product_id: product.product_id,
+          name: product.name,
+          price: product.price,
+          photo_url: product.photo_url,
+          quantity
+        });
+      }
+      writeLocalCart(items);
     }
-    writeLocalCart(items);
-  }
+  })();
+  
+  await cartWritePromise; 
   await updateCartBadge();
 }
 
 async function removeItem(item) {
+  cartWritePromise = (async () => {
+
   if (await isLoggedInCustomer()) {
     await api.delete(`/cart/items/${item.cart_item_id}`);
   } else {
     writeLocalCart(readLocalCart().filter(i => i.product_id !== item.product_id));
   }
+  
+})();
+  await cartWritePromise;
   await updateCartBadge();
 }
 
 async function updateQuantity(item, quantity) {
+  cartWritePromise = (async () => {
   if (quantity <= 0) return removeItem(item);
 
   if (await isLoggedInCustomer()) {
@@ -107,6 +109,9 @@ async function updateQuantity(item, quantity) {
     if (existing) existing.quantity = quantity;
     writeLocalCart(items);
   }
+  
+})();
+  await cartWritePromise;
   await updateCartBadge();
 }
 
@@ -129,20 +134,16 @@ async function updateCartBadge() {
   badge.dataset.count = count;
 }
 
-/**
- * Called right after a successful customer login/register (see
- * auth.js) — moves anything added while browsing as a guest onto
- * the now-known server cart, so it isn't lost.
- */
 async function syncLocalCartToServer() {
   const localItems = readLocalCart();
   if (!localItems.length) return;
 
-  cachedIsLoggedIn = true; // login just succeeded — skip the /auth/me round trip
+  localStorage.removeItem(CART_STORAGE_KEY);
+  cachedIsLoggedIn = true; 
+
   for (const item of localItems) {
     await api.post('/cart/items', { product_id: item.product_id, quantity: item.quantity }).catch(() => {});
   }
-  localStorage.removeItem(CART_STORAGE_KEY);
 }
 
 function cartPreviewItemTemplate(item) {

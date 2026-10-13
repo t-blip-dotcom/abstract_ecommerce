@@ -53,11 +53,16 @@
       <form id="staff-login-form" novalidate class="auth-form is-active" data-auth-form="login">
         <div class="field">
           <label for="staff-username">Username</label>
-          <input type="text" id="staff-username" autocomplete="username" required>
+          <input type="text" id="staff-username" name="username" autocomplete="username" required>
         </div>
         <div class="field">
           <label for="staff-password">Password</label>
-          <input type="password" id="staff-password" autocomplete="current-password" required>
+          <div class="password-wrap">
+            <input type="password" id="staff-password" name="password" autocomplete="current-password" required>
+            <button type="button" class="password-toggle" aria-label="Toggle password visibility">
+              <i data-lucide="eye"></i>
+            </button>
+          </div>
         </div>
         <button type="submit" class="btn btn--primary btn--full">Log in</button>
       </form>
@@ -65,22 +70,32 @@
       <form id="staff-request-form" novalidate class="auth-form" data-auth-form="request">
         <div class="field">
           <label for="request-name">Full name</label>
-          <input type="text" id="request-name" required>
+          <input type="text" id="request-name" name="name" required>
         </div>
         <div class="field">
           <label for="request-username">Choose a username</label>
-          <input type="text" id="request-username" autocomplete="username" required>
+          <input type="text" id="request-username" name="username" autocomplete="username" required>
         </div>
         <div class="field">
           <label for="request-password">Choose a password</label>
-          <input type="password" id="request-password" autocomplete="new-password" required>
+          <div class="password-wrap">
+            <input type="password" id="request-password" name="password" autocomplete="new-password" required>
+            <button type="button" class="password-toggle" aria-label="Toggle password visibility">
+              <i data-lucide="eye"></i>
+            </button>
+          </div>
         </div>
         <div class="field">
           <label for="request-password-confirm">Confirm password</label>
-          <input type="password" id="request-password-confirm" autocomplete="new-password" required>
+          <div class="password-wrap">
+            <input type="password" id="request-password-confirm" autocomplete="new-password" required>
+            <button type="button" class="password-toggle" aria-label="Toggle password visibility">
+              <i data-lucide="eye"></i>
+            </button>
+          </div>
         </div>
         <p class="auth-card-hint">
-          You'll be able to log in once an admin reviews and approves your account 
+          You'll be able to log in once an admin reviews and approves your account
         </p>
         <button type="submit" class="btn btn--primary btn--full">Submit request</button>
       </form>

@@ -87,3 +87,39 @@
   font-size: var(--fs-xs);
   margin-top: -6px;
 }
+/* ---- Password Visibility Toggle ---- */
+.password-wrap {
+  position: relative;
+  display: flex;
+}
+
+.password-wrap input {
+  width: 100%;
+  padding-right: 40px; /* Leave space for the eye icon */
+}
+
+.password-toggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+}
+
+.password-toggle:hover {
+  color: var(--color-primary);
+  background: var(--color-surface-alt);
+}
+
+.password-toggle [data-lucide] {
+  width: 18px;
+  height: 18px;
+}

@@ -1,10 +1,4 @@
-/**
- * admin-brands.js
- * Same pattern as admin-categories.js, except the logo upload needs
- * FormData instead of JSON — api.postForm/patchForm (see api.js)
- * send the raw <input type="file"> the way the backend's multer
- * middleware expects.
- */
+
 
 let adminBrands = [];
 let editingBrandId = null;
@@ -12,9 +6,9 @@ let editingBrandId = null;
 function brandRowTemplate(b) {
   return `
     <tr>
-      <td><img class="admin-table-thumb" src="${b.logo_url || `https://placehold.co/64x64/E1F1FB/0074BD?text=${encodeURIComponent(b.brand_name.charAt(0))}`}" alt=""></td>
+      <td><img class="admin-table-thumb" src="${api.assetUrl(b.logo_url) || placeholderLogo(b.brand_name)}" alt=""></td>
       <td>${b.brand_name}</td>
-      <td>${b.description || '—'}</td>
+      <td class="hide-on-mobile">${b.description || ' '}</td>
       <td>
         <div class="table-actions">
           <button data-edit-brand="${b.brand_id}" aria-label="Edit ${b.brand_name}"><i data-lucide="pencil"></i></button>
@@ -118,8 +112,7 @@ function initBrandModal() {
     e.preventDefault();
     if (!window.validateForm(form)) return;
 
-    // FormData instead of a plain object — this is what lets the
-    // logo file ride along with the text fields in one request.
+    
     const formData = new FormData();
     formData.append('brand_name', document.getElementById('brand-name').value);
     formData.append('description', document.getElementById('brand-description').value);

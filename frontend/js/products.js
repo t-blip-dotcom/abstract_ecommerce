@@ -1,12 +1,3 @@
-/**
- * products.js
- * Renders the "Popular Products" grid on the home page:
- * - fetches the catalog (mocked for now, shaped like the `products` table)
- * - applies category / brand filters against the FULL list (not just the
- *   current page), then paginates the filtered result
- * - draws each product_card and wires up its "Add to cart" button,
- *   which opens the shared quantity sheet (see quantity-sheet.js)
- */
 
 const DEFAULT_PRODUCTS_PER_PAGE = 8;
 
@@ -24,14 +15,7 @@ function formatPrice(amount) {
   return `KSh ${Number(amount).toLocaleString('en-KE')}`;
 }
 
-/**
- * Fetches the whole active catalog once (the backend already ranks
- * it by popularity by default) and maps its field names to the
- * shape the rest of this file expects. Filtering by category/brand
- * still happens client-side below, against this full list — that's
- * what makes it filter the WHOLE catalog rather than just the
- * current page.
- */
+
 async function loadProducts() {
   try {
     const { products } = await api.get('/products?per_page=500');
@@ -219,6 +203,5 @@ async function initProducts() {
 
 document.addEventListener('DOMContentLoaded', initProducts);
 
-// Exposed so search.js and filters.js can update state and re-filter,
-// and so product-detail.js can look up a single product by id.
+
 window.productsModule = { applyFilters, state, loadProducts, formatPrice };

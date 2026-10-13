@@ -1,11 +1,3 @@
-/**
- * queries/products.queries.js
- * Popularity ranking = how many times a product shows up across
- * ALL order_items ever, most-ordered first. Stock level is computed
- * from stock_quantity directly (0 = out of stock, < 15 = low stock)
- * rather than stored, so it's always accurate — no separate column
- * that could drift out of sync with the real number.
- */
 
 const pool = require('../db/pool');
 
@@ -36,17 +28,11 @@ const BASE_SELECT = `
   ) pop ON pop.product_id = p.product_id
 `;
 
-/**
- * Builds `WHERE ...` safely: every user-supplied value becomes a
- * $1, $2, ... placeholder, never text glued into the SQL string —
- * that's what makes this immune to SQL injection regardless of
- * what a shopper types into search or filter fields.
- */
 function buildFilters({ category_id, brand_id, status, search, includeInactive }) {
-  const clauses = [];
+  const clauses = ["p.is_deleted = FALSE"];
   const params = [];
 
-  // Shoppers never see inactive products; staff pass includeInactive: true.
+
   if (!includeInactive) {
     clauses.push("ps.product_status_name <> 'inactive'");
   }
@@ -148,7 +134,11 @@ async function updateProduct(productId, { name, category_id, brand_id, supplier_
 }
 
 async function deleteProduct(productId) {
-  await pool.query('DELETE FROM products WHERE product_id = $1', [productId]);
+  const inactiveStatusId = await getProductStatusId('inactive');
+  await pool.query(
+    'UPDATE products SET is_deleted = TRUE, product_status_id = $1 WHERE product_id = $2', 
+    [inactiveStatusId, productId]
+  );
 }
 
 module.exports = {

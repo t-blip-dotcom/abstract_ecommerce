@@ -1,11 +1,4 @@
-/**
- * auth.js
- * Customer login / register page. After a successful login or
- * signup: sync anything added to the cart as a guest onto the real
- * server cart (see cart.js), then go wherever the person was headed
- * before they were asked to log in — cart-page.js sends people here
- * as login.html?redirect=cart.html, otherwise it's just the home page.
- */
+
 
 function initAuthTabs() {
   const tabs = document.querySelectorAll('[data-auth-tab]');

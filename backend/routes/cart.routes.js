@@ -1,8 +1,4 @@
-/**
- * routes/cart.routes.js
- * All routes require a logged-in customer — the cart belongs to
- * their account, not a guest session, once they're signed in.
- */
+
 
 const express = require('express');
 const { body } = require('express-validator');

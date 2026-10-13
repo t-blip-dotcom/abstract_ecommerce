@@ -1,13 +1,3 @@
-/**
- * queries/notifications.queries.js
- * MongoDB version — same idea as the Postgres query files (one
- * function per job), just using the Mongo driver's methods instead
- * of SQL. Every notification has customer_id, type, title, body,
- * is_read, created_at; anything type-specific (order_id + new
- * status, promo details, which product sold out) rides along as
- * extra fields on the same document — that flexibility is exactly
- * why this collection is in Mongo instead of a fixed Postgres table.
- */
 
 const { ObjectId } = require('mongodb');
 const { getMongoDb } = require('../db/mongo');
@@ -19,18 +9,18 @@ function notifications() {
 async function createNotification({ customer_id, type, title, body, ...extra }) {
   const doc = {
     customer_id,
-    type, // 'order_status' | 'promotion' | 'stock'
+    type,
     title,
     body,
     is_read: false,
     created_at: new Date(),
-    ...extra // e.g. { order_id, new_status } or { product_id, product_name }
+    ...extra 
   };
   const { insertedId } = await notifications().insertOne(doc);
   return { _id: insertedId, ...doc };
 }
 
-/** Convenience wrapper used by orders.queries.js whenever a status changes. */
+
 function notifyOrderStatusChange({ customer_id, order_id, new_status }) {
   const friendlyStatus = new_status.replace('_', ' ');
   return createNotification({
@@ -43,7 +33,7 @@ function notifyOrderStatusChange({ customer_id, order_id, new_status }) {
   });
 }
 
-/** Used when a cart item sells out before checkout — see cart.queries.js. */
+
 function notifySoldOut({ customer_id, product_id, product_name }) {
   return createNotification({
     customer_id,

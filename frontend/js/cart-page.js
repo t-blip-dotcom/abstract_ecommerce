@@ -1,18 +1,5 @@
-/**
- * cart-page.js
- * Full cart view. Reads/writes through window.cartModule (cart.js),
- * which itself talks to the server once the person is logged in, or
- * localStorage before that.
- *
- * Checkout requires login — clicking it while logged out sends the
- * person to login.html and back here afterward, per the flow you
- * described. Real order creation is one call to POST
- * /api/orders/checkout; if the backend reports some items sold out
- * in the meantime, that gets reflected right in the cart instead of
- * just failing silently.
- */
 
-const DELIVERY_FEE = 200;
+
 let cartItems = [];
 
 function cartLineTemplate(item) {
@@ -38,6 +25,19 @@ function cartLineTemplate(item) {
       </button>
     </div>`;
 }
+function updateSummaryDisplay(subtotal) {
+  const isDelivery = document.getElementById('fulfillment-delivery')?.checked;
+  
+  document.getElementById('summary-subtotal').textContent = `KSh ${subtotal.toLocaleString('en-KE')}`;
+  
+  if (isDelivery) {
+    document.getElementById('summary-delivery').textContent = 'To be agreed';
+    document.getElementById('summary-total').textContent = `KSh ${subtotal.toLocaleString('en-KE')} + Transport`;
+  } else {
+    document.getElementById('summary-delivery').textContent = 'KSh 0';
+    document.getElementById('summary-total').textContent = `KSh ${subtotal.toLocaleString('en-KE')}`;
+  }
+}
 
 async function renderCartPage() {
   const list = document.getElementById('cart-lines');
@@ -59,10 +59,8 @@ async function renderCartPage() {
     list.innerHTML = cartItems.map(cartLineTemplate).join('');
 
     const subtotal = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
-    document.getElementById('summary-subtotal').textContent = `KSh ${subtotal.toLocaleString('en-KE')}`;
-    document.getElementById('summary-delivery').textContent = `KSh ${DELIVERY_FEE.toLocaleString('en-KE')}`;
-    document.getElementById('summary-total').textContent = `KSh ${(subtotal + DELIVERY_FEE).toLocaleString('en-KE')}`;
-
+    window.currentCartSubtotal = subtotal;
+    updateSummaryDisplay(subtotal);
     // Block checkout while anything in the cart just sold out.
     checkoutBtn.disabled = cartItems.some(i => i.is_available === false);
   }
@@ -153,6 +151,7 @@ function initCheckoutFieldToggles() {
 
     submitBtn.textContent = isCash ? 'Place order' : 'Send STK push';
   }
+  if (window.currentCartSubtotal) updateSummaryDisplay(window.currentCartSubtotal);
 
   [pickupRadio, deliveryRadio, mpesaRadio, cashRadio].forEach(radio =>
     radio.addEventListener('change', sync)
@@ -160,9 +159,7 @@ function initCheckoutFieldToggles() {
   sync();
 }
 
-/** Backend reports which cart items came up short (see the 409
- *  response from POST /orders/checkout) — reflect that in the cart
- *  itself instead of just showing an error and leaving it stale. */
+
 async function reconcileShortages(shortages) {
   for (const shortage of shortages) {
     const item = findItem(shortage.product_id);
@@ -217,8 +214,6 @@ async function initCheckoutModal() {
     const isCash = document.getElementById('payment-cash').checked;
     const phoneInput = document.getElementById('mpesa-phone');
 
-    // Cash needs no phone number at all — only validate/require it
-    // when M-Pesa is the chosen payment method.
     if (!isCash) {
       const phoneField = phoneInput.closest('.field');
       const phoneDigits = phoneInput.value.replace(/\s+/g, '');

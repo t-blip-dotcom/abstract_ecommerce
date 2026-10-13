@@ -1,6 +1,4 @@
-/**
- * routes/orders.routes.js
- */
+
 
 const express = require('express');
 const QRCode = require('qrcode');
@@ -16,9 +14,6 @@ const notificationQueries = require('../queries/notifications.queries');
 
 const STAFF_ORDER_ROLES = ['admin', 'online_manager', 'staff']; // everyone with orders access can update status
 
-// ---------------------------------------------------------
-// Customer: checkout + their own order history
-// ---------------------------------------------------------
 
 router.post(
   '/checkout',
@@ -61,8 +56,6 @@ router.post(
       res.status(201).json({ ...order, pickup_qr_data_url: pickupQrDataUrl });
     } catch (err) {
       if (err.shortages) {
-        // Let the customer know exactly which items sold out, so the
-        // frontend can grey them out and drop them from the cart.
         for (const item of err.shortages) {
           if (item.available === 0) {
             await notificationQueries.notifySoldOut({
@@ -86,9 +79,6 @@ router.get('/mine', requireAuth, asyncHandler(async (req, res) => {
   res.json(await orderQueries.getCustomerOrders(req.user.customer_id));
 }));
 
-// ---------------------------------------------------------
-// Staff: view/filter all orders, update status
-// ---------------------------------------------------------
 
 router.get(
   '/',
@@ -127,8 +117,6 @@ router.patch(
     const updated = await orderQueries.updateOrderStatus(req.params.id, req.body.status, req.user.staff_id);
     if (!updated) return res.status(404).json({ error: 'Order not found.' });
 
-    // This is the notification the customer sees for every status
-    // change — shipped, delivered, cancelled, etc.
     await notificationQueries.notifyOrderStatusChange({
       customer_id: updated.customer_id,
       order_id: updated.order_id,
@@ -138,11 +126,6 @@ router.patch(
     res.json({ success: true });
   })
 );
-
-// ---------------------------------------------------------
-// Pickup verification: staff scans/enters the QR's code, sees who
-// it belongs to, and confirms collection.
-// ---------------------------------------------------------
 
 router.get(
   '/pickup/:code',
@@ -165,15 +148,18 @@ router.post(
     if (order.pickup_collected_at) {
       return res.status(409).json({ error: 'This order has already been collected.' });
     }
-
-    const updated = await orderQueries.markPickupCollected(order.order_id, req.user.staff_id);
+    
+  
+    const isCash = order.payment_method_name === 'cash_on_delivery';
+    
+    const updated = await orderQueries.markPickupCollected(order.order_id, req.user.staff_id, isCash);
+    
     await notificationQueries.notifyOrderStatusChange({
       customer_id: updated.customer_id,
       order_id: updated.order_id,
       new_status: 'delivered'
     });
-
-    res.json({ success: true });
+    res.json({ success: true, message: isCash ? 'Cash collected and order marked as paid.' : 'Order collected.' });
   })
 );
 

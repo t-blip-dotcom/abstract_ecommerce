@@ -1,15 +1,3 @@
-/**
- * middleware/requireRole.middleware.js
- * Enforces the same role rights the admin frontend already shows/
- * hides in its nav — but here it's the real gate, since the
- * frontend check is just UI convenience and can't be trusted alone.
- *
- *   admin           -> staff, products, brands, categories, orders, customers, reports
- *   online_manager  -> products, brands, categories, orders, reports
- *   staff           -> products (read only), orders (status updates only)
- *
- * Usage: router.post('/products', requireAuth, requireRole(['admin', 'online_manager']), handler)
- */
 
 function requireRole(allowedRoles) {
   return function (req, res, next) {

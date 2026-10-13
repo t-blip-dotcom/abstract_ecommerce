@@ -1,6 +1,3 @@
-/* =========================================================
-   ADMIN / SUPER ADMIN DASHBOARD SHELL
-   ========================================================= */
 
 .admin-layout {
   display: grid;
@@ -377,13 +374,30 @@
 }
 
 @media (max-width: 900px) {
+  
   .admin-layout {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
   }
 
   .admin-sidebar {
-    padding: var(--space-4) var(--space-5);
+    height: auto;
+    min-height: unset;
+    padding: var(--space-3) var(--space-4);
     gap: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .admin-sidebar-topbar {
+    display: flex;
+    align-items: center;
+    flex-direction: row-reverse; /* Places the hamburger toggle on the left */
+    justify-content: flex-end;
+    gap: var(--space-4);
   }
 
   .admin-sidebar-toggle {

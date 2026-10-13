@@ -1,12 +1,3 @@
-/**
- * admin-orders.js
- * Wired to the real backend. Filters are sent as query params to
- * GET /api/orders; changing a status PATCHes /api/orders/:id/status
- * (the backend records who made the change and notifies the
- * customer itself — nothing extra to do here for that). "Items"
- * opens a modal fetching GET /api/orders/:id/items so you can see
- * exactly what was ordered, not just the order total.
- */
 
 const ORDER_STATUSES = ['pending', 'paid', 'processing', 'shipped', 'delivered', 'cancelled', 'payment_failed'];
 const PAYMENT_STATUSES = ['pending', 'completed', 'failed', 'refunded'];
@@ -33,11 +24,11 @@ function orderRowTemplate(o) {
     <tr>
       <td>#${o.order_id}</td>
       <td>${o.customer_name}</td>
-      <td>${o.order_date}</td>
-      <td>${(o.payment_method_name || '—').replace('_', ' ')}</td>
-      <td><span class="status-badge status-badge--${o.payment_status === 'completed' ? 'paid' : o.payment_status}">${o.payment_status}</span></td>
+      <td class="hide-on-mobile">${o.order_date}</td>
+      <td class="hide-on-mobile">${(o.payment_method_name || '—').replace('_', ' ')}</td>
+      <td class="hide-on-mobile"><span class="status-badge status-badge--${o.payment_status === 'completed' ? 'paid' : o.payment_status}">${o.payment_status}</span></td>
       <td>${o.amount_paid ? `KSh ${Number(o.amount_paid).toLocaleString('en-KE')}` : '—'}</td>
-      <td>${o.processed_by_name || '—'}</td>
+      <td class="hide-on-mobile">${o.processed_by_name || '—'}</td>
       <td>
         <select class="status-select" data-order-status="${o.order_id}">
           ${statusOptions}

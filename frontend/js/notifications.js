@@ -1,9 +1,3 @@
-/**
- * notifications.js
- * Order-status and promotion notifications only make sense for a
- * known customer, so guests see a prompt to log in here instead of
- * an empty list pretending there's nothing to show.
- */
 
 function notificationIcon(type) {
   if (type === 'order_status') return 'package';

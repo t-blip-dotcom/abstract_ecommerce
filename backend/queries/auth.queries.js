@@ -1,15 +1,6 @@
-/**
- * queries/auth.queries.js
- * Every function here is one job: run one parameterized SQL
- * statement and return the result. Parameterized ($1, $2, ...)
- * means the values are sent separately from the SQL text, so a
- * malicious value typed into a form can never be interpreted as
- * SQL — that's what prevents SQL injection here.
- */
 
 const pool = require('../db/pool');
 
-// ---- Customers ----
 
 async function findCustomerByEmail(email) {
   const { rows } = await pool.query(
@@ -29,7 +20,6 @@ async function createCustomer({ name, primary_phone, alternative_phone, address,
   return rows[0];
 }
 
-// ---- Staff ----
 
 async function findStaffByUsername(username) {
   const { rows } = await pool.query(
@@ -49,6 +39,12 @@ async function getRoleIdByName(roleName) {
 
 async function createStaffRequest({ name, username, password_hash }) {
   const staffRoleId = await getRoleIdByName('staff');
+  
+ 
+  if (!staffRoleId) {
+    throw new Error("System configuration error: 'staff' role not found in database.");
+  }
+
   const { rows } = await pool.query(
     `INSERT INTO STAFF (name, username, password_hash, role_id, status)
      VALUES ($1, $2, $3, $4, 'pending')

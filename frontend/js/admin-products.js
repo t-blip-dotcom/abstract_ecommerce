@@ -1,15 +1,3 @@
-/**
- * admin-products.js
- * The most involved admin page to wire up, for two reasons:
- *  1. Category/brand/supplier are foreign keys in the database, so
- *     the dropdowns have to be populated from real IDs (GET
- *     /api/categories, /api/brands, /api/suppliers) instead of the
- *     hardcoded name lists the mock version used.
- *  2. The photo goes through FormData, same as admin-brands.js.
- * Filters are sent to the backend as category_id/brand_id/status/
- * search query params — GET /api/products does the actual filtering
- * (and the popularity ranking), this file just displays what comes back.
- */
 
 const PRODUCT_STATUSES = ['active', 'inactive', 'out_of_stock'];
 
@@ -64,12 +52,12 @@ function productRowTemplate(p, canManageProducts) {
     <tr>
       <td><img class="admin-table-thumb" src="${api.assetUrl(p.photo_url) || placeholderPhoto(p.name)}" alt=""></td>
       <td>${p.name}</td>
-      <td>${p.category_name}</td>
-      <td>${p.brand_name}</td>
-      <td>${p.supplier_name}</td>
+      <td class="hide-on-mobile">${p.category_name}</td>
+      <td class="hide-on-mobile">${p.brand_name}</td>
+      <td class="hide-on-mobile">${p.supplier_name}</td>
       <td>KSh ${Number(p.price).toLocaleString('en-KE')}</td>
       <td>${p.stock_quantity}</td>
-      <td><span class="status-badge status-badge--${p.status}">${p.status.replace('_', ' ')}</span></td>
+      <td class="hide-on-mobile"><span class="status-badge status-badge--${p.status}">${p.status.replace('_', ' ')}</span></td>
       ${canManageProducts ? `
       <td>
         <div class="table-actions">

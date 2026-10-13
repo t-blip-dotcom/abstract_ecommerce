@@ -1,11 +1,9 @@
-/**
- * queries/categories.queries.js
- */
-
 const pool = require('../db/pool');
 
 async function listCategories() {
-  const { rows } = await pool.query('SELECT * FROM category ORDER BY category_name ASC');
+  const { rows } = await pool.query(
+    'SELECT * FROM category WHERE is_deleted = FALSE ORDER BY category_name ASC'
+  );
   return rows;
 }
 
@@ -26,7 +24,17 @@ async function updateCategory(categoryId, { category_name, description }) {
 }
 
 async function deleteCategory(categoryId) {
-  await pool.query('DELETE FROM category WHERE category_id = $1', [categoryId]);
+  const { rows } = await pool.query(
+    `SELECT COUNT(*) as count 
+     FROM product 
+     WHERE category_id = $1 AND is_deleted = FALSE`, 
+    [categoryId]
+  );
+  
+  if (parseInt(rows[0].count, 10) > 0) {
+    throw new Error('Cannot delete this category because active products are using it. Reassign those products first.');
+  }
+  await pool.query('UPDATE category SET is_deleted = TRUE WHERE category_id = $1', [categoryId]);
 }
 
 module.exports = { listCategories, createCategory, updateCategory, deleteCategory };

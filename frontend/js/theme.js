@@ -1,11 +1,3 @@
-/**
- * theme.js
- * Three modes: "auto" (follows the device's light/dark setting —
- * the default for anyone who hasn't chosen otherwise), "light", and
- * "dark". Clicking the toggle cycles auto -> light -> dark -> auto.
- * The button always shows the current mode as text so a first-time
- * visitor knows what they're looking at.
- */
 
 const THEME_MODE_KEY = 'cosmeticshop_theme_mode';
 const THEME_MODES = ['auto', 'light', 'dark'];
@@ -41,7 +33,6 @@ function initTheme() {
   let mode = getStoredMode();
   applyMode(mode);
 
-  // If the person hasn't chosen a mode, keep following the device live.
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
     if (getStoredMode() === 'auto') applyMode('auto');
   });

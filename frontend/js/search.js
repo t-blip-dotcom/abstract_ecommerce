@@ -1,10 +1,3 @@
-/**
- * search.js
- * Wires the header search input to the product filter in products.js
- * (filters across the whole catalog, not just the visible page), and
- * shows an autosuggest dropdown of matching product names as the
- * person types — e.g. typing "mega" suggests "Mega Growth Leave-In".
- */
 
 function escapeHtml(str) {
   return str.replace(/[&<>"']/g, (c) => ({
@@ -81,8 +74,7 @@ function initSearch() {
     if (input.value.trim()) renderSuggestions(input.value.trim().toLowerCase());
   });
 
-  // Close suggestions on outside click or Escape; clicking a
-  // suggestion navigates via its own href, so no extra handler needed.
+
   document.addEventListener('click', (e) => {
     if (suggestionsList && !e.target.closest('.search-bar-wrap')) {
       suggestionsList.classList.remove('is-open');

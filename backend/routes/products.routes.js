@@ -1,9 +1,3 @@
-/**
- * routes/products.routes.js
- * GET routes are public (it's a storefront). Everything that
- * changes data requires staff login, and only admin/manager can
- * manage products — staff has view-only rights per the role spec.
- */
 
 const express = require('express');
 const { body, query } = require('express-validator');
@@ -18,7 +12,6 @@ const productQueries = require('../queries/products.queries');
 
 const MANAGE_ROLES = ['admin', 'online_manager'];
 
-// Staff (any role) can see inactive products; shoppers and guests can't.
 const isStaff = (req) => req.user?.type === 'staff';
 
 router.get(

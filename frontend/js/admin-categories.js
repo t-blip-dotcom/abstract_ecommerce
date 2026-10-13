@@ -1,12 +1,3 @@
-/**
- * admin-categories.js
- * Category management — admin & manager only. This is the simplest
- * page to read as a template for how every other admin-*.js file
- * talks to the real backend: api.get/post/patch/delete (see api.js),
- * wrapped in try/catch so a failed request shows a red toast (and,
- * for validation failures, red field messages) instead of silently
- * doing nothing.
- */
 
 let adminCategories = [];
 let editingCategoryId = null;
@@ -15,7 +6,7 @@ function categoryRowTemplate(c) {
   return `
     <tr>
       <td>${c.category_name}</td>
-      <td>${c.description || '—'}</td>
+      <td class="hide-on-mobile">${c.description || '—'}</td>
       <td>
         <div class="table-actions">
           <button data-edit-category="${c.category_id}" aria-label="Edit ${c.category_name}"><i data-lucide="pencil"></i></button>

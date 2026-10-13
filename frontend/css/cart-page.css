@@ -164,10 +164,20 @@
   }
 
   .cart-line {
-    grid-template-columns: 56px 1fr auto;
+    grid-template-columns: 64px 1fr auto;
+    gap: var(--space-3);
+    align-items: start;
+  }
+
+  .cart-line img {
+    width: 64px;
+    height: 64px;
+    grid-row: 1 / span 2;
   }
 
   .cart-line-total {
-    grid-column: 2 / span 1;
+    grid-column: 2 / -1;
+    justify-self: end;
+    margin-top: var(--space-2);
   }
 }

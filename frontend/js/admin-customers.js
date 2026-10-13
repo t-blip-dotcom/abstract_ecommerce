@@ -1,8 +1,3 @@
-/**
- * admin-customers.js
- * Admin only, view + edit (no add/delete — customers register
- * themselves). Same api.get/patch pattern as the other admin pages.
- */
 
 let adminCustomers = [];
 let editingCustomerId = null;
@@ -12,8 +7,8 @@ function customerRowTemplate(c) {
     <tr>
       <td>${c.name}</td>
       <td>${c.primary_phone}</td>
-      <td>${c.alternative_phone || '—'}</td>
-      <td>${c.address || '—'}</td>
+      <td class="hide-on-mobile">${c.alternative_phone || '—'}</td>
+      <td class="hide-on-mobile">${c.address || '—'}</td>
       <td>${c.email_address || '—'}</td>
       <td>
         <div class="table-actions">

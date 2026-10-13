@@ -1,20 +1,4 @@
-/**
- * queries/orders.queries.js
- *
- * The oversell problem this solves: two customers both have the
- * last 3 units of something in their cart, and both hit "checkout"
- * around the same time. Without protection, both requests could
- * read "3 in stock", both think they succeeded, and you'd end up
- * with -3 stock and two customers owed a product you don't have.
- *
- * The fix is `SELECT ... FOR UPDATE` inside a transaction: it locks
- * each product row the moment this order starts checking it, so a
- * second, concurrent checkout for the same product has to wait its
- * turn instead of reading the same (about to be stale) number. Once
- * the first transaction commits its stock decrease, the second one's
- * lock releases and it sees the REAL remaining stock — so if that's
- * now too low, it fails cleanly instead of overselling.
- */
+
 
 const pool = require('../db/pool');
 const cartQueries = require('./cart.queries');
@@ -29,12 +13,7 @@ function generatePickupCode() {
   return `PU-${random}`;
 }
 
-/**
- * Creates an order from the customer's current cart. Everything
- * inside runs on ONE transaction client (not the shared pool) so
- * the row locks and the eventual COMMIT/ROLLBACK all apply to the
- * same database connection.
- */
+
 async function createOrderFromCart({ customer_id, payment_method, shipping_address, fulfillment_method }) {
   const client = await pool.connect();
 
@@ -54,8 +33,6 @@ async function createOrderFromCart({ customer_id, payment_method, shipping_addre
       throw err;
     }
 
-    // Lock every product row this order touches, then check stock
-    // against the now-guaranteed-fresh numbers.
     const shortages = [];
     const lockedProducts = {};
 
@@ -85,15 +62,16 @@ async function createOrderFromCart({ customer_id, payment_method, shipping_addre
       throw err;
     }
 
-    // Everything's available — decrement stock now, while the locks
-    // are still held, so nobody else can also "succeed" on the same units.
+let totalProductAmount = 0;
+
     for (const item of items) {
       await client.query(
         'UPDATE products SET stock_quantity = stock_quantity - $1 WHERE product_id = $2',
         [item.quantity, item.product_id]
       );
+      
+      totalProductAmount += Number(lockedProducts[item.product_id].price) * item.quantity;
 
-      // Auto-flip to out_of_stock the moment it hits zero.
       if (lockedProducts[item.product_id].stock_quantity - item.quantity <= 0) {
         const outOfStockId = await getStatusId('product_status', 'product_status_name', 'out_of_stock');
         await client.query('UPDATE products SET product_status_id = $1 WHERE product_id = $2', [outOfStockId, item.product_id]);
@@ -111,11 +89,11 @@ async function createOrderFromCart({ customer_id, payment_method, shipping_addre
     const { rows: orderRows } = await client.query(
       `INSERT INTO orders
          (order_status_id, payment_method_id, order_date, payment_status_id,
-          shipping_address, customer_id, fulfillment_method, pickup_code)
-       VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7)
+          shipping_address, customer_id, fulfillment_method, pickup_code, amount_paid)
+       VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7, $8)
        RETURNING order_id, pickup_code`,
       [orderStatusId, paymentMethodRows[0]?.payment_method_id || null, paymentStatusId,
-        shipping_address || null, customer_id, fulfillment_method, pickupCode]
+       shipping_address || null, customer_id, fulfillment_method, pickupCode, totalProductAmount]
     );
     const order = orderRows[0];
 
@@ -216,25 +194,40 @@ async function updateOrderStatus(orderId, newStatusName, staffId) {
 
 async function findByPickupCode(pickupCode) {
   const { rows } = await pool.query(
-    `SELECT o.order_id, o.pickup_code, o.pickup_collected_at, c.name AS customer_name, c.primary_phone
+    `SELECT o.order_id, o.pickup_code, o.pickup_collected_at, o.amount_paid, 
+            c.name AS customer_name, c.primary_phone,
+            pm.payment_method_name, pys.name AS payment_status
      FROM orders o
      JOIN customers c ON c.customer_id = o.customer_id
+     LEFT JOIN payment_method pm ON pm.payment_method_id = o.payment_method_id
+     JOIN payment_status pys ON pys.payment_status_id = o.payment_status_id
      WHERE o.pickup_code = $1`,
     [pickupCode]
   );
   return rows[0] || null;
 }
 
-async function markPickupCollected(orderId, staffId) {
+async function markPickupCollected(orderId, staffId, isCashPayment) {
   const deliveredStatusId = await getStatusId('order_status', 'name', 'delivered');
-  const { rows } = await pool.query(
-    `UPDATE orders
-     SET pickup_collected_at = CURRENT_TIMESTAMP, order_status_id = $1, processed_by = $2
-     WHERE order_id = $3
-     RETURNING order_id, customer_id`,
-    [deliveredStatusId, staffId, orderId]
-  );
-  return rows[0] || null;
+  
+  if (isCashPayment) {
+    const completedPaymentId = await getStatusId('payment_status', 'name', 'completed');
+    const { rows } = await pool.query(
+      `UPDATE orders 
+       SET pickup_collected_at = CURRENT_TIMESTAMP, order_status_id = $1, processed_by = $2, payment_status_id = $3
+       WHERE order_id = $4 RETURNING order_id, customer_id`,
+      [deliveredStatusId, staffId, completedPaymentId, orderId]
+    );
+    return rows[0] || null;
+  } else {
+    const { rows } = await pool.query(
+      `UPDATE orders 
+       SET pickup_collected_at = CURRENT_TIMESTAMP, order_status_id = $1, processed_by = $2
+       WHERE order_id = $3 RETURNING order_id, customer_id`,
+      [deliveredStatusId, staffId, orderId]
+    );
+    return rows[0] || null;
+  }
 }
 
 async function getOrderItems(orderId) {

@@ -1,52 +1,29 @@
-/**
- * middleware/upload.middleware.js
- * Handles the actual file coming from an <input type="file">.
- * Validates it's really an image (by MIME type, not just the file
- * extension — extensions are trivial to fake) and caps the size so
- * nobody can fill the disk with one "photo" upload.
- *
- * Saved files land in backend/uploads/ with a random-ish name (so
- * two people uploading "photo.jpg" don't overwrite each other) and
- * are served back out at /uploads/<filename> — see the static route
- * in server.js.
- */
-
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
-const crypto = require('crypto');
-
-const UPLOAD_DIR = path.join(__dirname, '..', 'uploads');
-fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-
-const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
+  destination: (req, file, cb) => cb(null, path.join(__dirname, '../uploads')),
   filename: (req, file, cb) => {
-    const safeExt = path.extname(file.originalname).toLowerCase();
-    const randomName = crypto.randomBytes(16).toString('hex');
-    cb(null, `${randomName}${safeExt}`);
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname).toLowerCase());
   }
 });
 
-function fileFilter(req, file, cb) {
-  if (!ALLOWED_TYPES.has(file.mimetype)) {
-    return cb(new Error('Only JPG, PNG, or WEBP images are allowed.'));
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Invalid file type. Only JPG, PNG, and WEBP are allowed.'), false);
   }
-  cb(null, true);
-}
+};
 
-const upload = multer({
+const upload = multer({ 
   storage,
-  fileFilter,
-  limits: { fileSize: MAX_FILE_SIZE }
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit strictly enforced
+  fileFilter 
 });
 
-/** Builds the public URL for an uploaded file, or null if none was sent. */
-function uploadedFileUrl(req) {
-  return req.file ? `/uploads/${req.file.filename}` : null;
-}
+const uploadedFileUrl = (req) => req.file ? `/uploads/${req.file.filename}` : null;
 
-module.exports = { upload, uploadedFileUrl, UPLOAD_DIR };
+module.exports = { upload, uploadedFileUrl };

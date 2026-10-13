@@ -1,8 +1,4 @@
-/**
- * routes/notifications.routes.js
- * All scoped to the logged-in customer — a customer can only ever
- * see or mark their own notifications, never anyone else's.
- */
+
 
 const express = require('express');
 const router = express.Router();

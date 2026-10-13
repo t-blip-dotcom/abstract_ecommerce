@@ -1,9 +1,3 @@
-/**
- * admin-suppliers.js
- * Same pattern as admin-categories.js. Admin & manager only — this
- * was the missing piece that made it impossible to create products
- * at all once there were no suppliers left to pick from.
- */
 
 let adminSuppliers = [];
 let editingSupplierId = null;

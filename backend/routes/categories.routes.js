@@ -1,8 +1,3 @@
-/**
- * routes/categories.routes.js
- * Viewing categories is public (the storefront filter needs it);
- * only admin/manager can add, edit, or delete one.
- */
 
 const express = require('express');
 const { body } = require('express-validator');

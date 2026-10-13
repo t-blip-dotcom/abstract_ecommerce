@@ -1,11 +1,7 @@
-/**
- * queries/suppliers.queries.js
- */
-
 const pool = require('../db/pool');
 
 async function listSuppliers() {
-  const { rows } = await pool.query('SELECT * FROM supplier ORDER BY supplier_name ASC');
+  const { rows } = await pool.query('SELECT * FROM supplier WHERE is_deleted = FALSE ORDER BY supplier_name ASC');
   return rows;
 }
 
@@ -26,7 +22,15 @@ async function updateSupplier(supplierId, { supplier_name, phone }) {
 }
 
 async function deleteSupplier(supplierId) {
-  await pool.query('DELETE FROM supplier WHERE supplier_id = $1', [supplierId]);
+  const { rows } = await pool.query(
+    `SELECT COUNT(*) as count FROM products WHERE supplier_id = $1 AND is_deleted = FALSE`, 
+    [supplierId]
+  );
+  
+  if (parseInt(rows[0].count, 10) > 0) {
+    throw new Error('Cannot delete this supplier because active products are linked to it. Reassign them first.');
+  }
+  await pool.query('UPDATE supplier SET is_deleted = TRUE WHERE supplier_id = $1', [supplierId]);
 }
 
 module.exports = { listSuppliers, createSupplier, updateSupplier, deleteSupplier };

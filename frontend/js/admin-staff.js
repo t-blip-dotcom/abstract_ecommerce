@@ -1,11 +1,4 @@
-/**
- * admin-staff.js
- * Admin only. Same api.get/post/patch/delete pattern as
- * admin-categories.js — see that file's comments for the full
- * explanation. The one extra action here is Approve, which is just
- * a PATCH to a dedicated endpoint since that's the one thing an
- * admin has to do per new hire.
- */
+
 
 const STATUS_LABELS = { pending: 'Pending approval', active: 'Active', inactive: 'Inactive' };
 const ROLES = ['admin', 'online_manager', 'staff'];
@@ -23,10 +16,10 @@ function staffRowTemplate(s) {
   return `
     <tr>
       <td>${s.name}</td>
-      <td>${s.username}</td>
+      <td class="hide-on-mobile">${s.username}</td>
       <td>${ROLE_LABELS[s.role_name] || s.role_name}</td>
       <td><span class="status-badge ${statusBadgeClass(s.status)}">${STATUS_LABELS[s.status] || s.status}</span></td>
-      <td>${s.last_login ? new Date(s.last_login).toLocaleString('en-KE') : '—'}</td>
+      <td class="hide-on-mobile">${s.last_login ? new Date(s.last_login).toLocaleString('en-KE') : '—'}</td>
       <td>
         <div class="table-actions">
           ${s.status === 'pending' ? `<button data-approve-staff="${s.staff_id}" aria-label="Approve ${s.name}"><i data-lucide="check"></i></button>` : ''}
@@ -128,9 +121,7 @@ function initStaffModal() {
 
   window.initDirtyTracking(form);
 
-  // Admins edit existing staff here (role/status); new staff always
-  // sign themselves up via admin-login.html's "Request access" tab,
-  // so there's no "Add staff member" button on this page.
+
   document.getElementById('staff-modal-close').addEventListener('click', () => window.confirmDiscard(form, closeStaffModal));
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) window.confirmDiscard(form, closeStaffModal);
