@@ -23,7 +23,7 @@
           password: document.getElementById('staff-password').value
         });
         window.showToast('Logged in successfully.', 'success');
-        window.location.href = 'admin-products.html';
+        window.location.href = '/admin/products';
       } catch (err) {
         //displaying the not approved yet error
         window.showToast(err.message, 'error');

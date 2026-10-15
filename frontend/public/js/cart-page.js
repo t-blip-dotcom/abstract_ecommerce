@@ -193,7 +193,7 @@ async function initCheckoutModal() {
     // once you're logged in, and that's what checkout reads from.
     if (!(await window.cartModule.isLoggedInCustomer())) {
       window.showToast('Please log in to complete your purchase.', 'error');
-      window.location.href = 'login.html?redirect=cart.html';
+      window.location.href = '/login?redirect=/cart';
       return;
     }
 

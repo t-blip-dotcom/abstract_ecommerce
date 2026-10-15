@@ -1,14 +1,14 @@
 
 
 const ADMIN_NAV_ITEMS = [
-  { key: 'products', href: 'admin-products.html', icon: 'package', label: 'Products' },
-  { key: 'orders', href: 'admin-orders.html', icon: 'clipboard-list', label: 'Orders' },
-  { key: 'brands', href: 'admin-brands.html', icon: 'tag', label: 'Brands' },
-  { key: 'categories', href: 'admin-categories.html', icon: 'layout-grid', label: 'Categories' },
-  { key: 'suppliers', href: 'admin-suppliers.html', icon: 'truck', label: 'Suppliers' },
-  { key: 'customers', href: 'admin-customers.html', icon: 'users-round', label: 'Customers' },
-  { key: 'staff', href: 'admin-staff.html', icon: 'user-cog', label: 'Staff' },
-  { key: 'reports', href: 'admin-reports.html', icon: 'bar-chart-3', label: 'Reports' }
+  { key: 'products', href: '/admin/products', icon: 'package', label: 'Products' },
+  { key: 'orders', href: '/admin/orders', icon: 'clipboard-list', label: 'Orders' },
+  { key: 'brands', href: '/admin/brands', icon: 'tag', label: 'Brands' },
+  { key: 'categories', href: '/admin/categories', icon: 'layout-grid', label: 'Categories' },
+  { key: 'suppliers', href: '/admin/suppliers', icon: 'truck', label: 'Suppliers' },
+  { key: 'customers', href: '/admin/customers', icon: 'users-round', label: 'Customers' },
+  { key: 'staff', href: '/admin/staff', icon: 'user-cog', label: 'Staff' },
+  { key: 'reports', href: '/admin/reports', icon: 'bar-chart-3', label: 'Reports' }
 ];
 
 const PAGE_ACCESS = {
@@ -68,7 +68,7 @@ async function requirePageAccess(pageKey) {
   }
 
   if (!user) {
-    window.location.href = 'admin-login.html';
+    window.location.href = '/admin/login';
     return false;
   }
 
@@ -103,7 +103,7 @@ function initAdminLogout() {
   if (!logoutBtn) return;
   logoutBtn.addEventListener('click', async () => {
     await api.post('/auth/staff-logout', {}).catch(() => {});
-    window.location.href = 'admin-login.html';
+    window.location.href = '/admin/login';
   });
 }
 

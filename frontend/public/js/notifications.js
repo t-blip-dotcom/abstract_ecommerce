@@ -32,7 +32,7 @@ function loginPromptTemplate() {
     <div class="dropdown-panel-empty">
       <i data-lucide="lock"></i>
       <p>Log in to see your order updates and promotions.</p>
-      <a href="login.html?redirect=notifications.html" class="btn btn--primary btn--sm">Log in</a>
+      <a href="/login?redirect=/notifications" class="btn btn--primary btn--sm">Log in</a>
     </div>`;
 }
 

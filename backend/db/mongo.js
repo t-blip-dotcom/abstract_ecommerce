@@ -1,4 +1,3 @@
-
 const { MongoClient } = require('mongodb');
 
 let client;

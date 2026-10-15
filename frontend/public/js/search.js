@@ -20,7 +20,7 @@ function suggestionItemTemplate(product, term) {
     `https://placehold.co/64x64/E1F1FB/0074BD?text=${encodeURIComponent(product.name.charAt(0))}`;
 
   return `
-    <a class="search-suggestion-item" href="product-detail.html?id=${product.product_id}">
+    <a class="search-suggestion-item" href="/products/${product.product_id}">
       <img src="${thumb}" alt="">
       <span>
         <span class="search-suggestion-name">${highlightMatch(product.name, term)}</span>

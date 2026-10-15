@@ -35,9 +35,13 @@ app.use(cors({
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-app.use(express.static(path.join(__dirname, '../frontend')));
+
+// for static files(css js and assets)
+app.use(express.static(path.join(__dirname, '../frontend/public')));
+
+//uploaded files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
@@ -55,6 +59,8 @@ app.use('/api/staff', require('./routes/staff.routes'));
 app.use('/api/customers', require('./routes/customers.routes'));
 app.use('/api/reports', require('./routes/reports.routes'));
 
+//page routes
+app.use('/', require('./routes/pages.routes'));
 
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found.' }));
 

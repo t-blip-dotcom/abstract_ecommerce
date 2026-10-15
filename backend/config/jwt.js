@@ -1,4 +1,3 @@
-
 const jwt = require('jsonwebtoken');
 
 function signToken(payload) {

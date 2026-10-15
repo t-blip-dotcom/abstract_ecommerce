@@ -43,13 +43,13 @@ function productCardTemplate(product) {
       <div class="product-card-media">
         ${outOfStock ? '<span class="product-card-stock-flag">Out of stock</span>' : ''}
         ${!outOfStock && lowStock ? '<span class="product-card-stock-flag">Low stock</span>' : ''}
-        <a href="product-detail.html?id=${product.product_id}">
+        <a href="/products/${product.product_id}"">
           <img src="${api.assetUrl(product.photo_url) || `https://placehold.co/400x400/E1F1FB/0074BD?text=${encodeURIComponent(product.name)}`}" alt="${product.name}" loading="lazy">
         </a>
       </div>
       <div class="product-card-body">
         <span class="product-card-category">${product.category}</span>
-        <h3 class="product-card-name"><a href="product-detail.html?id=${product.product_id}">${product.name}</a></h3>
+        <h3 class="product-card-name"><a href="/products/${product.product_id}">${product.name}</a></h3>
         <div class="product-card-footer">
           <span class="product-card-price">${formatPrice(product.price)}</span>
           <button class="product-card-add-btn" data-add-to-cart="${product.product_id}" ${outOfStock ? 'disabled' : ''}>

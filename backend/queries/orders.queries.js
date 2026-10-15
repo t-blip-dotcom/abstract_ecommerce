@@ -1,5 +1,3 @@
-
-
 const pool = require('../db/pool');
 const cartQueries = require('./cart.queries');
 
@@ -14,17 +12,30 @@ function generatePickupCode() {
 }
 
 
-async function createOrderFromCart({ customer_id, payment_method, shipping_address, fulfillment_method }) {
+async function createOrderFromCart({ customer_id, payment_method, shipping_address, fulfillment_method, items: givenItems, created_by_staff }) {
+  if (payment_method === 'cash_on_delivery' && fulfillment_method === 'delivery') {
+    const err = new Error('Cash payment is only available for pickup orders.');
+    err.status = 400;
+    throw err;
+  }
+
   const client = await pool.connect();
 
   try {
     await client.query('BEGIN');
 
-    const cart = await cartQueries.getOrCreateActiveCart(customer_id);
-    const { rows: items } = await client.query(
-      'SELECT product_id, quantity FROM cart_items WHERE cart_id = $1',
-      [cart.cart_id]
-    );
+    // Customer checkout reads the cart; an admin-created order passes its own items.
+    let cart = null;
+    let items;
+    if (givenItems) {
+      items = givenItems;
+    } else {
+      cart = await cartQueries.getOrCreateActiveCart(customer_id);
+      ({ rows: items } = await client.query(
+        'SELECT product_id, quantity FROM cart_items WHERE cart_id = $1',
+        [cart.cart_id]
+      ));
+    }
 
     if (items.length === 0) {
       await client.query('ROLLBACK');
@@ -86,14 +97,27 @@ let totalProductAmount = 0;
 
     const pickupCode = fulfillment_method === 'pickup' ? generatePickupCode() : null;
 
+    const { rows: numRows } = await client.query(
+      `WITH bump AS (
+         INSERT INTO order_counters (order_date, last_number)
+         VALUES ((NOW() AT TIME ZONE 'Africa/Nairobi')::date, 1)
+         ON CONFLICT (order_date) DO UPDATE SET last_number = order_counters.last_number + 1
+         RETURNING order_date, last_number
+       )
+       SELECT 'ORD' || to_char(order_date, 'YYMMDD') || lpad(last_number::text, 4, '0') AS order_number
+       FROM bump`
+    );
+
     const { rows: orderRows } = await client.query(
       `INSERT INTO orders
          (order_status_id, payment_method_id, order_date, payment_status_id,
-          shipping_address, customer_id, fulfillment_method, pickup_code, amount_paid)
-       VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7, $8)
-       RETURNING order_id, pickup_code`,
+          shipping_address, customer_id, fulfillment_method, pickup_code, amount_paid,
+          order_number, created_by_staff)
+       VALUES ($1, $2, (NOW() AT TIME ZONE 'Africa/Nairobi')::date, $3, $4, $5, $6, $7, $8, $9, $10)
+       RETURNING order_id, order_number, pickup_code, amount_paid`,
       [orderStatusId, paymentMethodRows[0]?.payment_method_id || null, paymentStatusId,
-       shipping_address || null, customer_id, fulfillment_method, pickupCode, totalProductAmount]
+       shipping_address || null, customer_id, fulfillment_method, pickupCode, totalProductAmount,
+       numRows[0].order_number, created_by_staff || null]
     );
     const order = orderRows[0];
 

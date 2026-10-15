@@ -1,4 +1,3 @@
-
 const pool = require('../db/pool');
 
 const LOW_STOCK_THRESHOLD = 15;

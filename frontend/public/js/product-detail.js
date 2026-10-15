@@ -89,7 +89,7 @@ async function initProductDetail() {
   const root = document.getElementById('product-detail-root');
   if (!root) return;
 
-  const id = new URLSearchParams(window.location.search).get('id');
+  const id = window.location.pathname.split('/').pop();
   if (!id) {
     root.innerHTML = '<p>No product specified.</p>';
     return;

@@ -19,7 +19,7 @@ async function afterLoginSuccess(message) {
   await window.cartModule.syncLocalCartToServer();
   window.showToast(message, 'success');
   const redirect = new URLSearchParams(window.location.search).get('redirect');
-  window.location.href = redirect || 'index.html';
+  window.location.href = redirect || '/';
 }
 
 function initAuthForms() {
